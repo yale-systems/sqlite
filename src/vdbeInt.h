@@ -195,9 +195,11 @@ struct VdbeFrame {
   void *token;            /* Copy of SubProgram.token */
   i64 lastRowid;          /* Last insert rowid (sqlite3.lastRowid) */
   AuxData *pAuxData;      /* Linked list of auxdata allocations */
-#ifdef SQLITE_DEBUG
+#ifndef _FREEBSD_KERNEL
+#if SQLITE_DEBUG
   u32 iFrameMagic;        /* magic number for sanity checking */
-#endif
+#endif /* SQLITE_DEBUG */
+#endif /* _FREEBSD_KERNEL */
   int nCursor;            /* Number of entries in apCsr */
   int pc;                 /* Program Counter in parent (calling) frame */
   int nOp;                /* Size of aOp array */

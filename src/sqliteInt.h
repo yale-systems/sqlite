@@ -624,10 +624,6 @@
 #include <stddef.h>
 #endif
 
-#ifdef _FREEBSD_KERNEL
-#include <sys/libkern.h>
-#endif
-
 /*
 ** Use a macro to replace memcpy() if compiled with SQLITE_INLINE_MEMCPY.
 ** This allows better measurements of where memcpy() is used when running

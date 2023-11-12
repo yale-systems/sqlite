@@ -33,10 +33,6 @@
 #ifndef SQLITE3_H
 #define SQLITE3_H
 
-#ifndef _FREEBSD_KERNEL
-#include <stdarg.h>     /* Needed for the definition of va_list */
-#endif
-
 #ifdef _FREEBSD_KERNEL
 #include <machine/stdarg.h> /* Use this for kernel defines */
 #include <sys/cdefs.h>
@@ -84,6 +80,8 @@
 #define SQLITE_OMIT_LOCALTIME 1
 #define SQLITE_OMIT_FLOATING_POINT 1
 #define SQLITE_OMIT_DATETIME_FUNCS 1
+#else
+#include <stdarg.h> /* Needed for definition of va_list */
 #endif
 
 /*
