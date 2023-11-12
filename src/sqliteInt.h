@@ -615,11 +615,18 @@
 
 #include "hash.h"
 #include "parse.h"
+
+#ifndef _FREEBSD_KERNEL
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
+#endif
+
+#ifdef _FREEBSD_KERNEL
+#include <sys/libkern.h>
+#endif
 
 /*
 ** Use a macro to replace memcpy() if compiled with SQLITE_INLINE_MEMCPY.

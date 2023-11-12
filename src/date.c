@@ -44,9 +44,12 @@
 **      Richmond, Virginia (USA)
 */
 #include "sqliteInt.h"
+
+#ifndef _FREEBSD_KERNEL
 #include <stdlib.h>
 #include <assert.h>
 #include <time.h>
+#endif
 
 #ifndef SQLITE_OMIT_DATETIME_FUNCS
 

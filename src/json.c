@@ -2310,7 +2310,7 @@ static void jsonRemoveAllNulls(JsonNode *pNode){
 ** SQL functions used for testing and debugging
 ****************************************************************************/
 
-#if SQLITE_DEBUG
+#ifdef SQLITE_DEBUG
 /*
 ** Print N node entries.
 */
@@ -3831,7 +3831,7 @@ void sqlite3RegisterJsonFunctions(void){
     JFUNCTION(json_type,          1, 1, 0, 0,          jsonTypeFunc),
     JFUNCTION(json_type,          2, 1, 0, 0,          jsonTypeFunc),
     JFUNCTION(json_valid,         1, 1, 0, 0,          jsonValidFunc),
-#if SQLITE_DEBUG
+#ifdef SQLITE_DEBUG
     JFUNCTION(json_parse,         1, 1, 0, 0,          jsonParseFunc),
     JFUNCTION(json_test1,         1, 1, 0, 0,          jsonTest1Func),
 #endif
