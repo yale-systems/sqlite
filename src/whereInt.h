@@ -464,9 +464,11 @@ struct WhereInfo {
   SrcList *pTabList;        /* List of tables in the join */
   ExprList *pOrderBy;       /* The ORDER BY clause or NULL */
   ExprList *pResultSet;     /* Result set of the query */
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED
   Expr *pWhere;             /* The complete WHERE clause */
 #endif
+#endif /* _FREEBSD_KERNEL */
   Select *pSelect;          /* The entire SELECT statement containing WHERE */
   int aiCurOnePass[2];      /* OP_OpenWrite cursors for the ONEPASS opt */
   int iContinue;            /* Jump here to continue with next record */

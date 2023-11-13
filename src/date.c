@@ -1566,6 +1566,21 @@ static void ctimestampFunc(
 ** and strftime(). The format string to pass to strftime() is supplied
 ** as the user-data for the function.
 */
+
+#ifdef _FREEBSD_KERNEL //Kernelspace
+static void currentTimeFunc(
+  //Paddling zeros - workaround and a TODO for later
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  char zBuf[20];
+  zBuf[0] = '0';
+  for (int i = 1; i < 20; i++) zBuf[i] = zBuf[i-1];
+  sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
+}
+
+#else //Code which includes C-library functions
 static void currentTimeFunc(
   sqlite3_context *context,
   int argc,
@@ -1597,6 +1612,7 @@ static void currentTimeFunc(
     sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
   }
 }
+#endif /* _FREEBSD_KERNEL */
 #endif
 
 /*

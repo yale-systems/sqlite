@@ -2599,18 +2599,23 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   */
   if( pBuilder->pOrSet!=0 ){
     if( pTemplate->nLTerm ){
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED
       u16 n = pBuilder->pOrSet->n;
       int x =
 #endif
+#endif /* FREEBSD_KERNEL */
       whereOrInsert(pBuilder->pOrSet, pTemplate->prereq, pTemplate->rRun,
                                     pTemplate->nOut);
+
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x8 */
       if( sqlite3WhereTrace & 0x8 ){
         sqlite3DebugPrintf(x?"   or-%d:  ":"   or-X:  ", n);
         sqlite3WhereLoopPrint(pTemplate, pBuilder->pWC);
       }
 #endif
+#endif /* FREEBSD_KERNEL */
     }
     return SQLITE_OK;
   }
@@ -2622,12 +2627,14 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   if( ppPrev==0 ){
     /* There already exists a WhereLoop on the list that is better
     ** than pTemplate, so just ignore pTemplate */
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x8 */
     if( sqlite3WhereTrace & 0x8 ){
       sqlite3DebugPrintf("   skip: ");
       sqlite3WhereLoopPrint(pTemplate, pBuilder->pWC);
     }
 #endif
+#endif /* _FREEBSD_KERNEL */
     return SQLITE_OK; 
   }else{
     p = *ppPrev;
@@ -2637,6 +2644,7 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   ** with pTemplate[] if p[] exists, or if p==NULL then allocate a new
   ** WhereLoop and insert it.
   */
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x8 */
   if( sqlite3WhereTrace & 0x8 ){
     if( p!=0 ){
@@ -2649,6 +2657,7 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
     sqlite3WhereLoopPrint(pTemplate, pBuilder->pWC);
   }
 #endif
+#endif /* _FREEBSD_KERNEL */
   if( p==0 ){
     /* Allocate a new WhereLoop to add to the end of the list */
     *ppPrev = p = sqlite3DbMallocRawNN(db, sizeof(WhereLoop));
@@ -2667,12 +2676,14 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
       pToDel = *ppTail;
       if( pToDel==0 ) break;
       *ppTail = pToDel->pNextLoop;
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x8 */
       if( sqlite3WhereTrace & 0x8 ){
         sqlite3DebugPrintf(" delete: ");
         sqlite3WhereLoopPrint(pToDel, pBuilder->pWC);
       }
 #endif
+#endif /* _FREEBSD_KERNEL */
       whereLoopDelete(db, pToDel);
     }
   }
@@ -3155,6 +3166,7 @@ static int whereLoopAddBtreeIndex(
              ** See tag-202002240-1 */
              && pNew->nOut+10 > pProbe->aiRowLogEst[0]
             ){
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x01 */
               if( sqlite3WhereTrace & 0x20 ){
                 sqlite3DebugPrintf(
@@ -3162,6 +3174,7 @@ static int whereLoopAddBtreeIndex(
                 sqlite3WhereTermPrint(pTerm, 999);
               }
 #endif
+#endif /* _FREEBSD_KERNEL */
               pTerm->wtFlags |= TERM_HIGHTRUTH;
               if( pTerm->wtFlags & TERM_HEURTRUTH ){
                 /* If the term has previously been used with an assumption of
@@ -6023,9 +6036,11 @@ WhereInfo *sqlite3WhereBegin(
   pWInfo->pParse = pParse;
   pWInfo->pTabList = pTabList;
   pWInfo->pOrderBy = pOrderBy;
-#if WHERETRACE_ENABLED
-  pWInfo->pWhere = pWhere;
-#endif
+#ifndef _FREEBSD_KERNEL
+  #if WHERETRACE_ENABLED
+    pWInfo->pWhere = pWhere;
+  #endif
+#endif /* _FREEBSD_KERNEL */
   pWInfo->pResultSet = pResultSet;
   pWInfo->aiCurOnePass[0] = pWInfo->aiCurOnePass[1] = -1;
   pWInfo->nLevel = nTabList;

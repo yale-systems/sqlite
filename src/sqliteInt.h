@@ -650,7 +650,9 @@
 # define SQLITE_OMIT_DATETIME_FUNCS 1
 # define SQLITE_OMIT_TRACE 1
 # undef SQLITE_MIXED_ENDIAN_64BIT_FLOAT
+# ifndef _FREEBSD_KERNEL
 # undef SQLITE_HAVE_ISNAN
+# endif /* _FREEBSD_KERNEL */
 #endif
 #ifndef SQLITE_BIG_DBL
 # define SQLITE_BIG_DBL (1e99)
@@ -2882,9 +2884,14 @@ struct AggInfo {
 ** assignAggregateRegisters() that computes the value of pAggInfo->iFirstReg.
 ** The assert()s that are part of this macro verify that constraint.
 */
+#ifdef _FREEBSD_KERNEL
+#define AggInfoColumnReg(A,I) ((A)->iFirstReg+(I))
+#define AggInfoFuncReg(A,I) ((A)->iFirstReg+(A)->nColumn+(I))
+#else
 #define AggInfoColumnReg(A,I)  (assert((A)->iFirstReg),(A)->iFirstReg+(I))
 #define AggInfoFuncReg(A,I)    \
                       (assert((A)->iFirstReg),(A)->iFirstReg+(A)->nColumn+(I))
+#endif /* _FREEBSD_KERNEL */
 
 /*
 ** The datatype ynVar is a signed integer, either 16-bit or 32-bit.

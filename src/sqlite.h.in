@@ -74,12 +74,35 @@
 #define SQLITE_OS_OTHER 1
 #define assert(X)
 #define SQLITE_ENABLE_HIDDEN_COLUMNS 0
-#define HAVE_ISNAN 0
 #define SQLITE_HAVE_ISNAN 0
+#define HAVE_ISNAN 0
 #define SQLITE_OMIT_AUXILIARY_SAFETY_CHECKS 1
 #define SQLITE_OMIT_LOCALTIME 1
 #define SQLITE_OMIT_FLOATING_POINT 1
 #define SQLITE_OMIT_DATETIME_FUNCS 1
+#define HAVE_GMTIME_R 0
+#define HAVE_STRCHRNUL 0
+#define SQLITE_OS_WIN_THREADS 0
+#define HAVE_MALLOC_H 0
+MALLOC_DECLARE(M_SQLITE);
+#define SQLITE_OMIT_WAL 1
+#define SQLITE_ENABLE_STAT4 1
+#define SQLITE_OMIT_SUBQUERY 1
+#define SQLITE_USER_AUTHENTICATION 0
+#define FILENAME_MAX 255
+#define SQLITE_DEFAULT_CKPTFULLFSYNC 0
+MALLOC_DEFINE(M_SQLITE, "sqlite malloc", "Buffers to foo data	into the ether");
+
+#define SQLITE_API 
+
+int sqlite3_os_init(void) {
+	return 0;
+}
+
+int sqlite3_os_end(void) {
+	return 0;
+}
+
 #else
 #include <stdarg.h> /* Needed for definition of va_list */
 #endif

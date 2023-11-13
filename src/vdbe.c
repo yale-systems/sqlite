@@ -5551,7 +5551,12 @@ case OP_NewRowid: {           /* out2 */
       /* Assert that P3 is a valid memory cell. */
       assert( pOp->p3>0 );
       if( p->pFrame ){
+        #ifdef _FREEBSD_KERNEL
+        for(pFrame=p->pFrame; pFrame->pParent; pFrame=pFrame->pParent)
+        ; //Kernel programming requires semicolons in different line to silence warnings
+        #else
         for(pFrame=p->pFrame; pFrame->pParent; pFrame=pFrame->pParent);
+        #endif
         /* Assert that P3 is a valid memory cell. */
         assert( pOp->p3<=pFrame->nMem );
         pMem = &pFrame->aMem[pOp->p3];

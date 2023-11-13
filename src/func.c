@@ -1769,11 +1769,32 @@ static void kahanBabuskaNeumaierStep(
 ){
   volatile double s = pSum->rSum;
   volatile double t = s + r;
+  #ifdef _FREEBSD_KERNEL
+  /* 
+  ** fabs(x), included in <math.h>, is not supported in the 
+  ** FreeBSD Kernel. Our implementation may only return a value
+  ** only in floating point error cases near 0, which may only
+  ** have miniscule influence to arithmetic results.
+  */
+  double fabs_s;
+  double fabs_r;
+  fabs_s = s < 0 ? -1*s : s;
+  fabs_r = r < 0 ? -1*r : r;
+  if (fabs_s > fabs_r) {
+    pSum->rErr += (s - t) + r;
+  }
+  else {
+    pSum->rErr += (r - t) + s;
+  }
+  #else
+  fabs_s = fabs(s);
+  fabs_r = fabs(r);
   if( fabs(s) > fabs(r) ){
     pSum->rErr += (s - t) + r;
   }else{
     pSum->rErr += (r - t) + s;
   }
+  #endif /* _FREEBSD_KERNEL */
   pSum->rSum = t;
 }
 

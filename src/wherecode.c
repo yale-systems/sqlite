@@ -596,7 +596,11 @@ static int codeEqualityTerm(
 ){
   Expr *pX = pTerm->pExpr;
   Vdbe *v = pParse->pVdbe;
+#ifdef _FREEBSD_KERNEL
+  int iReg = 0;   //iReg is used uninitialized, set to 0 to avoid kernel warning
+#else
   int iReg;                  /* Register holding results */
+#endif /* _FREEBSD_KERNEL */
 
   assert( pLevel->pWLoop->aLTerm[iEq]==pTerm );
   assert( iTarget>0 );
@@ -1374,6 +1378,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
   pLevel->notReady = notReady & ~sqlite3WhereGetMask(&pWInfo->sMaskSet, iCur);
   bRev = (pWInfo->revMask>>iLevel)&1;
   VdbeModuleComment((v, "Begin WHERE-loop%d: %s",iLevel,pTabItem->pTab->zName));
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x4001 */
   if( sqlite3WhereTrace & 0x1 ){
     sqlite3DebugPrintf("Coding level %d of %d:  notReady=%llx  iFrom=%d\n",
@@ -1391,6 +1396,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
     sqlite3WhereClausePrint(pWC);
   }
 #endif
+#endif /* _FREEBSD_KERNEL */
 
   /* Create labels for the "break" and "continue" instructions
   ** for the current loop.  Jump to addrBrk to break out of a loop.
@@ -2684,6 +2690,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
     }
   }
 
+#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x4001 */
   if( sqlite3WhereTrace & 0x4000 ){
     sqlite3DebugPrintf("All WHERE-clause terms after coding level %d:\n",
@@ -2695,6 +2702,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
        iLevel, (u64)pLevel->notReady);
   }
 #endif
+#endif /* _FREEBSD_KERNEL */
   return pLevel->notReady;
 }
 

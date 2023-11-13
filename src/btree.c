@@ -1453,7 +1453,12 @@ static u16 cellSizePtrNoPayload(MemPage *pPage, u8 *pCell){
 
   assert( pPage->childPtrSize==4 );
   pEnd = pIter + 9;
+  #ifdef _FREEBSD_KERNEL
+  while( (*pIter++)&0x80 && pIter<pEnd )
+  ; //Kernel programming requires semicolons in different line to silence warnings
+  #else
   while( (*pIter++)&0x80 && pIter<pEnd );
+  #endif /* _FREEBSD_KERNEL */
   assert( debuginfo.nSize==(u16)(pIter - pCell) || CORRUPT_DB );
   return (u16)(pIter - pCell);
 }
