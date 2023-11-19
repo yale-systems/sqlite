@@ -4150,11 +4150,15 @@ static int exprCodeVector(Parse *pParse, Expr *p, int *piFreeable){
   }else{
     *piFreeable = 0;
     if( p->op==TK_SELECT ){
+#ifdef _FREEBSD_KERNEL
+      iResult = 0;
+#else
 #if SQLITE_OMIT_SUBQUERY
       iResult = 0;
 #else
       iResult = sqlite3CodeSubselect(pParse, p);
 #endif
+#endif /* _FREEBSD_KERNEL */
     }else{
       int i;
       iResult = pParse->nMem+1;
