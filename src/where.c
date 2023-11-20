@@ -3166,7 +3166,6 @@ static int whereLoopAddBtreeIndex(
              ** See tag-202002240-1 */
              && pNew->nOut+10 > pProbe->aiRowLogEst[0]
             ){
-#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x01 */
               if( sqlite3WhereTrace & 0x20 ){
                 sqlite3DebugPrintf(
@@ -3174,7 +3173,6 @@ static int whereLoopAddBtreeIndex(
                 sqlite3WhereTermPrint(pTerm, 999);
               }
 #endif
-#endif /* _FREEBSD_KERNEL */
               pTerm->wtFlags |= TERM_HIGHTRUTH;
               if( pTerm->wtFlags & TERM_HEURTRUTH ){
                 /* If the term has previously been used with an assumption of
