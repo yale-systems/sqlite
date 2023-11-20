@@ -2599,23 +2599,19 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   */
   if( pBuilder->pOrSet!=0 ){
     if( pTemplate->nLTerm ){
-#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED
       u16 n = pBuilder->pOrSet->n;
       int x =
 #endif
-#endif /* FREEBSD_KERNEL */
       whereOrInsert(pBuilder->pOrSet, pTemplate->prereq, pTemplate->rRun,
                                     pTemplate->nOut);
 
-#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x8 */
       if( sqlite3WhereTrace & 0x8 ){
         sqlite3DebugPrintf(x?"   or-%d:  ":"   or-X:  ", n);
         sqlite3WhereLoopPrint(pTemplate, pBuilder->pWC);
       }
 #endif
-#endif /* FREEBSD_KERNEL */
     }
     return SQLITE_OK;
   }
@@ -2627,14 +2623,12 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   if( ppPrev==0 ){
     /* There already exists a WhereLoop on the list that is better
     ** than pTemplate, so just ignore pTemplate */
-#ifndef _FREEBSD_KERNEL
 #if WHERETRACE_ENABLED /* 0x8 */
     if( sqlite3WhereTrace & 0x8 ){
       sqlite3DebugPrintf("   skip: ");
       sqlite3WhereLoopPrint(pTemplate, pBuilder->pWC);
     }
 #endif
-#endif /* _FREEBSD_KERNEL */
     return SQLITE_OK; 
   }else{
     p = *ppPrev;
