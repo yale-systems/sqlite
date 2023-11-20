@@ -90,7 +90,234 @@ MALLOC_DECLARE(M_SQLITE);
 #define FILENAME_MAX 255
 #define SQLITE_MAX_PATHLEN 255
 #define SQLITE_DEFAULT_CKPTFULLFSYNC 0
+#define SQLITE_OMIT_LOAD_EXTENSION 1
 #define CHAR_BIT 8
+MALLOC_DEFINE(M_SQLITE, "sqlite malloc", "Buffers to foo data	into the ether");
+
+#define significandBits 23
+typedef uint32_t rep_t;
+typedef int32_t srep_t;
+typedef float fp_t;
+#define REP_C UINT32_C
+typedef union {
+	long double ld;
+	struct {
+		double hi;
+		double lo;
+	}s;
+}DD;
+
+typedef union { 
+	double d;
+	uint64_t x;
+} doublebits;
+
+#define typeWidth       (sizeof(rep_t)*CHAR_BIT)
+#define exponentBits    (typeWidth - significandBits - 1)
+#define maxExponent     ((1 << exponentBits) - 1)
+#define exponentBias    (maxExponent >> 1)
+
+#define implicitBit     (REP_C(1) << significandBits)
+#define significandMask (implicitBit - 1U)
+#define signBit         (REP_C(1) << (significandBits + exponentBits))
+#define absMask         (signBit - 1U)
+#define exponentMask    (absMask ^ significandMask)
+#define oneRep          ((rep_t)exponentBias << significandBits)
+#define infRep          exponentMask
+#define quietBit        (implicitBit >> 1)
+#define qnanRep         (exponentMask | quietBit)
+
+long double __floatditf(int64_t a) {
+	
+	static const double twop32 = 0x1.0p32;
+	static const double twop52 = 0x1.0p52;
+	
+	doublebits low = { .d = twop52 };
+	low.x |= a & UINT64_C(0x00000000ffffffff);
+	
+	const double high_addend = (double)((int32_t)(a >> 32))*twop32 - twop52;
+
+	DD result;
+	
+	result.s.hi = high_addend + low.d;
+	result.s.lo = (high_addend - result.s.hi) + low.d;
+	
+	return result.ld;
+	
+}
+
+double __floatdidf(u_int a)
+{
+	static const double twop52 = 0x1.0p52;
+	static const double twop32 = 0x1.0p32;
+	
+	union { int64_t x; double d; } low = { .d = twop52 };
+	
+	const double high = (int32_t)(a >> 32) * twop32;
+	low.x |= a & INT64_C(0x00000000ffffffff);
+	
+	const double result = (high - twop52) + low.d;
+	return result;
+}
+
+static inline rep_t toRep(fp_t x) {
+    const union { fp_t f; rep_t i; } rep = {.f = x};
+    return rep.i;
+}
+
+static inline fp_t fromRep(rep_t x) {
+    const union { fp_t f; rep_t i; } rep = {.i = x};
+    return rep.f;
+}
+
+fp_t __floatsidf(int a) {
+    
+    const int aWidth = sizeof a * CHAR_BIT;
+    
+    // Handle zero as a special case to protect clz
+    if (a == 0)
+        return fromRep(0);
+    
+    // All other cases begin by extracting the sign and absolute value of a
+    rep_t sign = 0;
+    if (a < 0) {
+        sign = signBit;
+        a = -a;
+    }
+    
+    // Exponent of (fp_t)a is the width of abs(a).
+    const int exponent = (aWidth - 1) - __builtin_clz(a);
+    rep_t result;
+    
+    // Shift a into the significand field and clear the implicit bit.  Extra
+    // cast to unsigned int is necessary to get the correct behavior for
+    // the input INT_MIN.
+    const int shift = significandBits - exponent;
+    result = (rep_t)(unsigned int)a << shift ^ implicitBit;
+    
+    // Insert the exponent
+    result += (rep_t)(exponent + exponentBias) << significandBits;
+    // Insert the sign bit and return
+    return fromRep(result | sign);
+}
+
+
+enum LE_RESULT {
+    LE_LESS      = -1,
+    LE_EQUAL     =  0,
+    LE_GREATER   =  1,
+    LE_UNORDERED =  1
+};
+
+enum LE_RESULT __ledf2(fp_t a, fp_t b) {
+    
+    const srep_t aInt = toRep(a);
+    const srep_t bInt = toRep(b);
+    const rep_t aAbs = aInt & absMask;
+    const rep_t bAbs = bInt & absMask;
+    
+    // If either a or b is NaN, they are unordered.
+    if (aAbs > infRep || bAbs > infRep) return LE_UNORDERED;
+    
+    // If a and b are both zeros, they are equal.
+    if ((aAbs | bAbs) == 0) return LE_EQUAL;
+    
+    // If at least one of a and b is positive, we get the same result comparing
+    // a and b as signed integers as we would with a floating-point compare.
+    if ((aInt & bInt) >= 0) {
+        if (aInt < bInt) return LE_LESS;
+        else if (aInt == bInt) return LE_EQUAL;
+        else return LE_GREATER;
+    }
+    
+    // Otherwise, both are negative, so we need to flip the sense of the
+    // comparison to get the correct result.  (This assumes a twos- or ones-
+    // complement integer representation; if integers are represented in a
+    // sign-magnitude representation, then this flip is incorrect).
+    else {
+        if (aInt > bInt) return LE_LESS;
+        else if (aInt == bInt) return LE_EQUAL;
+        else return LE_GREATER;
+    }
+}
+
+enum GE_RESULT {
+    GE_LESS      = -1,
+    GE_EQUAL     =  0,
+    GE_GREATER   =  1,
+    GE_UNORDERED = -1
+};
+
+enum GE_RESULT __gedf2(fp_t a, fp_t b) {
+    
+    const srep_t aInt = toRep(a);
+    const srep_t bInt = toRep(b);
+    const rep_t aAbs = aInt & absMask;
+    const rep_t bAbs = bInt & absMask;
+    
+    if (aAbs > infRep || bAbs > infRep) return GE_UNORDERED;
+    if ((aAbs | bAbs) == 0) return GE_EQUAL;
+    if ((aInt & bInt) >= 0) {
+        if (aInt < bInt) return GE_LESS;
+        else if (aInt == bInt) return GE_EQUAL;
+        else return GE_GREATER;
+    } else {
+        if (aInt > bInt) return GE_LESS;
+        else if (aInt == bInt) return GE_EQUAL;
+        else return GE_GREATER;
+    }
+}
+
+enum LE_RESULT __eqdf2(fp_t a, fp_t b) {
+    return __ledf2(a, b);
+}
+
+enum LE_RESULT __ltdf2(fp_t a, fp_t b) {
+    return __ledf2(a, b);
+}
+
+enum LE_RESULT __nedf2(fp_t a, fp_t b) {
+    return __ledf2(a, b);
+}
+
+enum GE_RESULT __gtdf2(fp_t a, fp_t b) {
+    return __gedf2(a, b);
+}
+
+double fma(double a, double b, double c) {
+  return (a*b + c);
+}
+
+#define SQLITE_API 
+
+int sqlite3_os_init(void) {
+	return 0;
+}
+
+int sqlite3_os_end(void) {
+	return 0;
+}
+
+double __adddf3(double a, double b) {
+  return a+b;
+}
+
+double __subdf3(double a, double b) {
+  return a-b;
+}
+
+double __multf3(double a, double b) {
+  return a*b;
+}
+
+double __muldf3(double a, double b) {
+  return a*b;
+}
+
+double __fixtfdi(double a, double b) { return a+b; } // TODO
+double __fixtfsi(double a, double b) { return a+b; } // TODO  
+double __fixdfsi(double a, double b) { return a+b; } // TODO  
+double __fixdfdi(double a, double b) { return a+b; } // TODO  
 
 #else
 #include <stdarg.h> /* Needed for definition of va_list */

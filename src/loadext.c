@@ -554,13 +554,10 @@ static int sqlite3LoadExtension(
   char *zAltEntry = 0;
   void **aHandle;
   u64 nMsg = strlen(zFile);
-  #ifndef _FREEBSD_KERNEL
   int ii;
-  #endif /* _FREEBSD_KERNEL */
   int rc;
 
   /* Shared library endings to try if zFile cannot be loaded as written */
-#ifndef _FREEBSD_KERNEL
     static const char *azEndings[] = {
   #if SQLITE_OS_WIN
       "dll"   
@@ -570,7 +567,6 @@ static int sqlite3LoadExtension(
       "so"
   #endif
     };
-#endif /* _FREEBSD_KERNEL */
 
 
   if( pzErrMsg ) *pzErrMsg = 0;

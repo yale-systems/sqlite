@@ -6313,7 +6313,6 @@ static int selectExpander(Walker *pWalker, Select *p){
   return WRC_Continue;
 }
 
-#ifndef _FREEBSD_KERNEL
 #if SQLITE_DEBUG
 /*
 ** Always assert.  This xSelectCallback2 implementation proves that the
@@ -6324,7 +6323,6 @@ void sqlite3SelectWalkAssert2(Walker *NotUsed, Select *NotUsed2){
   assert( 0 );
 }
 #endif /* SQLITE_DEBUG */
-#endif /* _FREEBSD_KERNEL */
 /*
 ** This routine "expands" a SELECT statement and all of its subqueries.
 ** For additional information on what it means to "expand" a SELECT

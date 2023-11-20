@@ -1612,7 +1612,7 @@ static void currentTimeFunc(
     sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
   }
 }
-#endif /* _FREEBSD_KERNEL */
+#endif /* _FREEBSD_KERNEL */  
 #endif
 
 /*
