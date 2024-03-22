@@ -230,7 +230,7 @@ static char *csv_read_one_field(CsvReader *p){
             continue;
           }
         }
-        if( (c==',' && pc=='"')
+        if( (c==';' && pc=='"')
          || (c=='\n' && pc=='"')
          || (c=='\n' && pc=='\r' && ppc=='"')
          || (c==EOF && pc=='"')
@@ -270,7 +270,7 @@ static char *csv_read_one_field(CsvReader *p){
         }
       }
     }
-    while( c>',' || (c!=EOF && c!=',' && c!='\n') ){
+    while( c>';' || (c!=EOF && c!=';' && c!='\n') ){
       if( csv_append(p, (char)c) ) return 0;
       c = csv_getc(p);
     }
@@ -575,7 +575,7 @@ static int csvtabConnect(
       do{
         csv_read_one_field(&sRdr);
         nCol++;
-      }while( sRdr.cTerm==',' );
+      }while( sRdr.cTerm==';' );
     }
     if( nCol>0 && bHeader<1 ){
       for(iCol=0; iCol<nCol; iCol++){
@@ -590,7 +590,7 @@ static int csvtabConnect(
           zSep = ",";
           iCol++;
         }
-      }while( sRdr.cTerm==',' );
+      }while( sRdr.cTerm==';' );
       if( nCol<0 ){
         nCol = iCol;
       }else{
@@ -608,7 +608,7 @@ static int csvtabConnect(
     do{
       csv_read_one_field(&sRdr);
       pNew->nCol++;
-    }while( sRdr.cTerm==',' );
+    }while( sRdr.cTerm==';' );
   }else{
     pNew->nCol = nCol;
   }
@@ -750,7 +750,7 @@ static int csvtabNext(sqlite3_vtab_cursor *cur){
       memcpy(pCur->azVal[i], z, pCur->rdr.n+1);
       i++;
     }
-  }while( pCur->rdr.cTerm==',' );
+  }while( pCur->rdr.cTerm==';' );
   if( z==0 && i==0 ){
     pCur->iRowid = -1;
   }else{
