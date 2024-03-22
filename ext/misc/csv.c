@@ -502,9 +502,7 @@ static int csvtabConnect(
   int nCol = -99;            /* Value of the columns= parameter */
   CsvReader sRdr;            /* A CSV file reader used to store an error
                              ** message and/or to count the number of columns */
-  static const char *azParam[] = {
-     "filename", "data", "schema", 
-  };
+  
   char *azPValue[3];         /* Parameter values */
 # define CSV_FILENAME (azPValue[0])
 # define CSV_DATA     (azPValue[1])

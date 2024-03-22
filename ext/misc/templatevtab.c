@@ -10,7 +10,7 @@
 **
 *************************************************************************
 **
-** This file implements a template virtual-table.
+** This file implements a cstruct virtual-table, for C structs.
 ** Developers can make a copy of this file as a baseline for writing
 ** new virtual tables and/or table-valued functions.
 **
@@ -21,10 +21,10 @@
 **     (2)  Replace this header comment with something appropriate for
 **          the new virtual table
 **
-**     (3)  Change every occurrence of "templatevtab" to some other string
+**     (3)  Change every occurrence of "cstructvtab" to some other string
 **          appropriate for the new virtual table.  Ideally, the new string
 **          should be the basename of the source file: "mynewvtab".  Also
-**          globally change "TEMPLATEVTAB" to "MYNEWVTAB".
+**          globally change "CSTRUCTVTAB" to "MYNEWVTAB".
 **
 **     (4)  Run a test compilation to make sure the unmodified virtual
 **          table works.
@@ -32,16 +32,16 @@
 **     (5)  Begin making incremental changes, testing as you go, to evolve
 **          the new virtual table to do what you want it to do.
 **
-** This template is minimal, in the sense that it uses only the required
-** methods on the sqlite3_module object.  As a result, templatevtab is
+** This cstruct is minimal, in the sense that it uses only the required
+** methods on the sqlite3_module object.  As a result, cstructvtab is
 ** a read-only and eponymous-only table.  Those limitation can be removed
 ** by adding new methods.
 **
-** This template implements an eponymous-only virtual table with a rowid and
+** This cstruct implements an eponymous-only virtual table with a rowid and
 ** two columns named "a" and "b".  The table as 10 rows with fixed integer
 ** values. Usage example:
 **
-**     SELECT rowid, a, b FROM templatevtab;
+**     SELECT rowid, a, b FROM cstructvtab;
 */
 #if !defined(SQLITEINT_H)
 #include "sqlite3ext.h"
@@ -50,56 +50,56 @@ SQLITE_EXTENSION_INIT1
 #include <string.h>
 #include <assert.h>
 
-/* templatevtab_vtab is a subclass of sqlite3_vtab which is
+/* cstructvtab_vtab is a subclass of sqlite3_vtab which is
 ** underlying representation of the virtual table
 */
-typedef struct templatevtab_vtab templatevtab_vtab;
-struct templatevtab_vtab {
+typedef struct cstructvtab_vtab cstructvtab_vtab;
+struct cstructvtab_vtab {
   sqlite3_vtab base;  /* Base class - must be first */
   /* Add new fields here, as necessary */
 };
 
-/* templatevtab_cursor is a subclass of sqlite3_vtab_cursor which will
+/* cstructvtab_cursor is a subclass of sqlite3_vtab_cursor which will
 ** serve as the underlying representation of a cursor that scans
 ** over rows of the result
 */
-typedef struct templatevtab_cursor templatevtab_cursor;
-struct templatevtab_cursor {
+typedef struct cstructvtab_cursor cstructvtab_cursor;
+struct cstructvtab_cursor {
   sqlite3_vtab_cursor base;  /* Base class - must be first */
-  /* Insert new fields here.  For this templatevtab we only keep track
+  /* Insert new fields here.  For this cstructvtab we only keep track
   ** of the rowid */
   sqlite3_int64 iRowid;      /* The rowid */
 };
 
 /*
-** The templatevtabConnect() method is invoked to create a new
-** template virtual table.
+** The structvtabConnect() method is invoked to create a new
+** cstruct virtual table.
 **
-** Think of this routine as the constructor for templatevtab_vtab objects.
+** Think of this routine as the constructor for cstructvtab_vtab objects.
 **
 ** All this routine needs to do is:
 **
-**    (1) Allocate the templatevtab_vtab object and initialize all fields.
+**    (1) Allocate the cstructvtab_vtab object and initialize all fields.
 **
 **    (2) Tell SQLite (via the sqlite3_declare_vtab() interface) what the
 **        result set of queries against the virtual table will look like.
 */
-static int templatevtabConnect(
+static int cstructvtabConnect(
   sqlite3 *db,
   void *pAux,
   int argc, const char *const*argv,
   sqlite3_vtab **ppVtab,
   char **pzErr
 ){
-  templatevtab_vtab *pNew;
+  cstructvtab_vtab *pNew;
   int rc;
 
   rc = sqlite3_declare_vtab(db,
            "CREATE TABLE x(a,b)"
        );
   /* For convenience, define symbolic names for the index to each column. */
-#define TEMPLATEVTAB_A  0
-#define TEMPLATEVTAB_B  1
+#define CSTRUCTVTAB_A  0
+#define CSTRUCTVTAB_B  1
   if( rc==SQLITE_OK ){
     pNew = sqlite3_malloc( sizeof(*pNew) );
     *ppVtab = (sqlite3_vtab*)pNew;
@@ -110,19 +110,19 @@ static int templatevtabConnect(
 }
 
 /*
-** This method is the destructor for templatevtab_vtab objects.
+** This method is the destructor for cstructvtab_vtab objects.
 */
-static int templatevtabDisconnect(sqlite3_vtab *pVtab){
-  templatevtab_vtab *p = (templatevtab_vtab*)pVtab;
+static int cstructvtabDisconnect(sqlite3_vtab *pVtab){
+  cstructvtab_vtab *p = (cstructvtab_vtab*)pVtab;
   sqlite3_free(p);
   return SQLITE_OK;
 }
 
 /*
-** Constructor for a new templatevtab_cursor object.
+** Constructor for a new cstructvtab_cursor object.
 */
-static int templatevtabOpen(sqlite3_vtab *p, sqlite3_vtab_cursor **ppCursor){
-  templatevtab_cursor *pCur;
+static int cstructvtabOpen(sqlite3_vtab *p, sqlite3_vtab_cursor **ppCursor){
+  cstructvtab_cursor *pCur;
   pCur = sqlite3_malloc( sizeof(*pCur) );
   if( pCur==0 ) return SQLITE_NOMEM;
   memset(pCur, 0, sizeof(*pCur));
@@ -131,40 +131,40 @@ static int templatevtabOpen(sqlite3_vtab *p, sqlite3_vtab_cursor **ppCursor){
 }
 
 /*
-** Destructor for a templatevtab_cursor.
+** Destructor for a cstructvtab_cursor.
 */
-static int templatevtabClose(sqlite3_vtab_cursor *cur){
-  templatevtab_cursor *pCur = (templatevtab_cursor*)cur;
+static int cstructvtabClose(sqlite3_vtab_cursor *cur){
+  cstructvtab_cursor *pCur = (cstructvtab_cursor*)cur;
   sqlite3_free(pCur);
   return SQLITE_OK;
 }
 
 
 /*
-** Advance a templatevtab_cursor to its next row of output.
+** Advance a cstructvtab_cursor to its next row of output.
 */
-static int templatevtabNext(sqlite3_vtab_cursor *cur){
-  templatevtab_cursor *pCur = (templatevtab_cursor*)cur;
+static int cstructvtabNext(sqlite3_vtab_cursor *cur){
+  cstructvtab_cursor *pCur = (cstructvtab_cursor*)cur;
   pCur->iRowid++;
   return SQLITE_OK;
 }
 
 /*
-** Return values of columns for the row at which the templatevtab_cursor
+** Return values of columns for the row at which the cstructvtab_cursor
 ** is currently pointing.
 */
-static int templatevtabColumn(
+static int cstructvtabColumn(
   sqlite3_vtab_cursor *cur,   /* The cursor */
   sqlite3_context *ctx,       /* First argument to sqlite3_result_...() */
   int i                       /* Which column to return */
 ){
-  templatevtab_cursor *pCur = (templatevtab_cursor*)cur;
+  cstructvtab_cursor *pCur = (cstructvtab_cursor*)cur;
   switch( i ){
-    case TEMPLATEVTAB_A:
+    case CSTRUCTVTAB_A:
       sqlite3_result_int(ctx, 1000 + pCur->iRowid);
       break;
     default:
-      assert( i==TEMPLATEVTAB_B );
+      assert( i==CSTRUCTVTAB_B );
       sqlite3_result_int(ctx, 2000 + pCur->iRowid);
       break;
   }
@@ -175,8 +175,8 @@ static int templatevtabColumn(
 ** Return the rowid for the current row.  In this implementation, the
 ** rowid is the same as the output value.
 */
-static int templatevtabRowid(sqlite3_vtab_cursor *cur, sqlite_int64 *pRowid){
-  templatevtab_cursor *pCur = (templatevtab_cursor*)cur;
+static int cstructvtabRowid(sqlite3_vtab_cursor *cur, sqlite_int64 *pRowid){
+  cstructvtab_cursor *pCur = (cstructvtab_cursor*)cur;
   *pRowid = pCur->iRowid;
   return SQLITE_OK;
 }
@@ -185,23 +185,23 @@ static int templatevtabRowid(sqlite3_vtab_cursor *cur, sqlite_int64 *pRowid){
 ** Return TRUE if the cursor has been moved off of the last
 ** row of output.
 */
-static int templatevtabEof(sqlite3_vtab_cursor *cur){
-  templatevtab_cursor *pCur = (templatevtab_cursor*)cur;
+static int cstructvtabEof(sqlite3_vtab_cursor *cur){
+  cstructvtab_cursor *pCur = (cstructvtab_cursor*)cur;
   return pCur->iRowid>=10;
 }
 
 /*
-** This method is called to "rewind" the templatevtab_cursor object back
+** This method is called to "rewind" the cstructvtab_cursor object back
 ** to the first row of output.  This method is always called at least
-** once prior to any call to templatevtabColumn() or templatevtabRowid() or 
-** templatevtabEof().
+** once prior to any call to cstructvtabColumn() or cstructvtabRowid() or 
+** cstructvtabEof().
 */
-static int templatevtabFilter(
+static int cstructvtabFilter(
   sqlite3_vtab_cursor *pVtabCursor, 
   int idxNum, const char *idxStr,
   int argc, sqlite3_value **argv
 ){
-  templatevtab_cursor *pCur = (templatevtab_cursor *)pVtabCursor;
+  cstructvtab_cursor *pCur = (cstructvtab_cursor *)pVtabCursor;
   pCur->iRowid = 1;
   return SQLITE_OK;
 }
@@ -212,7 +212,7 @@ static int templatevtabFilter(
 ** a query plan for each invocation and compute an estimated cost for that
 ** plan.
 */
-static int templatevtabBestIndex(
+static int cstructvtabBestIndex(
   sqlite3_vtab *tab,
   sqlite3_index_info *pIdxInfo
 ){
@@ -225,20 +225,20 @@ static int templatevtabBestIndex(
 ** This following structure defines all the methods for the 
 ** virtual table.
 */
-static sqlite3_module templatevtabModule = {
+static sqlite3_module cstructvtabModule = {
   /* iVersion    */ 0,
   /* xCreate     */ 0,
-  /* xConnect    */ templatevtabConnect,
-  /* xBestIndex  */ templatevtabBestIndex,
-  /* xDisconnect */ templatevtabDisconnect,
+  /* xConnect    */ cstructvtabConnect,
+  /* xBestIndex  */ cstructvtabBestIndex,
+  /* xDisconnect */ cstructvtabDisconnect,
   /* xDestroy    */ 0,
-  /* xOpen       */ templatevtabOpen,
-  /* xClose      */ templatevtabClose,
-  /* xFilter     */ templatevtabFilter,
-  /* xNext       */ templatevtabNext,
-  /* xEof        */ templatevtabEof,
-  /* xColumn     */ templatevtabColumn,
-  /* xRowid      */ templatevtabRowid,
+  /* xOpen       */ cstructvtabOpen,
+  /* xClose      */ cstructvtabClose,
+  /* xFilter     */ cstructvtabFilter,
+  /* xNext       */ cstructvtabNext,
+  /* xEof        */ cstructvtabEof,
+  /* xColumn     */ cstructvtabColumn,
+  /* xRowid      */ cstructvtabRowid,
   /* xUpdate     */ 0,
   /* xBegin      */ 0,
   /* xSync       */ 0,
@@ -257,13 +257,13 @@ static sqlite3_module templatevtabModule = {
 #ifdef _WIN32
 __declspec(dllexport)
 #endif
-int sqlite3_templatevtab_init(
+int sqlite3_cstructvtab_init(
   sqlite3 *db, 
   char **pzErrMsg, 
   const sqlite3_api_routines *pApi
 ){
   int rc = SQLITE_OK;
   SQLITE_EXTENSION_INIT2(pApi);
-  rc = sqlite3_create_module(db, "templatevtab", &templatevtabModule, 0);
+  rc = sqlite3_create_module(db, "cstructvtab", &cstructvtabModule, 0);
   return rc;
 }
