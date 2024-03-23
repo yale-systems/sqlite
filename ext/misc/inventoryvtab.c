@@ -10,7 +10,7 @@
 **
 *************************************************************************
 ** Usage:
-** CREATE VIRTUAL TABLE my_inventory USING inventoryvtab('/path/to/data.csv');
+** CREATE VIRTUAL TABLE my_inventory USING(/path/to/data.txt');
 **
 ** This file implements a template virtual-table.
 ** Developers can make a copy of this file as a baseline for writing
@@ -176,7 +176,7 @@ static int inventoryvtabConnect(
   inventoryvtab_vtab *pNew; //inventory virtual table object to construct
   int rc;
   
-  if (argc >= 3) {
+  if (argc >= 4) {
     rc = sqlite3_declare_vtab(db,
            "CREATE TABLE x(product_id INT, quantity INT)"
        );
@@ -187,7 +187,7 @@ static int inventoryvtabConnect(
       if( pNew==0 ) return SQLITE_NOMEM;
       memset(pNew, 0, sizeof(*pNew));
 
-      pNew->filename = sqlite3_mprintf("%s", argv[2]); //third argument is filename
+      pNew->filename = sqlite3_mprintf("%s", argv[3]); //third argument is filename
       loadInventoryData(pNew, pNew->filename);
     }
     else {
@@ -197,6 +197,19 @@ static int inventoryvtabConnect(
   }
 
   return rc;
+}
+
+/*
+** Define this so that module is not made eponymous.
+*/
+static int inventoryvtabCreate(
+  sqlite3 *db,
+  void *pAux,
+  int argc, const char *const*argv,
+  sqlite3_vtab **ppVtab,
+  char **pzErr
+){
+  return inventoryvtabConnect(db, pAux, argc, argv, ppVtab, pzErr);
 }
 
 /*
@@ -324,11 +337,11 @@ static int inventoryvtabBestIndex(
 */
 static sqlite3_module inventoryvtabModule = {
   /* iVersion    */ 0,
-  /* xCreate     */ 0,
+  /* xCreate     */ inventoryvtabCreate,
   /* xConnect    */ inventoryvtabConnect,
   /* xBestIndex  */ inventoryvtabBestIndex,
   /* xDisconnect */ inventoryvtabDisconnect,
-  /* xDestroy    */ 0,
+  /* xDestroy    */ inventoryvtabDisconnect,
   /* xOpen       */ inventoryvtabOpen,
   /* xClose      */ inventoryvtabClose,
   /* xFilter     */ inventoryvtabFilter,
