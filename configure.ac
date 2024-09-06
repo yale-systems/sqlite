@@ -86,6 +86,9 @@ case "$host" in
 *kfbsd*)
     freebsd_kernel_env=yes
     ;;
+*klinux*)
+    linux_kernel_env=yes
+    ;;
 esac
 
 AS_IF([test "x$freebsd_kernel_env" == "xyes"], [
