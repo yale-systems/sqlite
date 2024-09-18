@@ -261,6 +261,8 @@ SRC = \
   $(TOP)/src/os_setup.h \
   $(TOP)/src/os_kfbsd.c \
   $(TOP)/src/os_kfbsd.h \
+  $(TOP)/src/os_klinux.c \
+  $(TOP)/src/os_klinux.h \
   $(TOP)/src/os_kv.c \
   $(TOP)/src/os_unix.c \
   $(TOP)/src/os_win.c \
@@ -482,6 +484,7 @@ TESTSRC2 = \
   $(TOP)/src/mem5.c \
   $(TOP)/src/os.c \
   $(TOP)/src/os_kfbsd.c \
+  $(TOP)/src/os_klinux.c \
   $(TOP)/src/os_kv.c \
   $(TOP)/src/os_unix.c \
   $(TOP)/src/os_win.c \
@@ -533,6 +536,7 @@ HDR = \
    $(TOP)/src/os.h \
    $(TOP)/src/os_common.h \
    $(TOP)/src/os_kfbsd.h \
+   $(TOP)/src/os_klinux.h \
    $(TOP)/src/os_setup.h \
    $(TOP)/src/os_win.h \
    $(TOP)/src/pager.h \
@@ -992,6 +996,9 @@ os.lo:	$(TOP)/src/os.c $(HDR)
 
 os_kfbsd.lo:	$(TOP)/src/os_kfbsd.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_kfbsd.c
+
+os_klinux.lo:	$(TOP)/src/os_klinux.c $(HDR)
+	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_klinux.c
 
 os_kv.lo:	$(TOP)/src/os_kv.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_kv.c

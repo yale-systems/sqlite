@@ -73,6 +73,11 @@
 #include <machine/fpu.h>
 MALLOC_DECLARE(M_SQLITE);
 #include <sys/malloc.h>
+#elif LNX_KERNEL
+#include <linux/stdarg.h>
+#include <linux/types.h>
+#include <linux/string.h>
+//STEL012: TODO
 #else
 #include <stdarg.h>     /* Needed for the definition of va_list */
 #endif

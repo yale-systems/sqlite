@@ -171,6 +171,7 @@ foreach hdr {
    opcodes.h
    os_common.h
    os_kfbsd.h
+   os_klinux.h
    os_setup.h
    os_win.h
    os.h
@@ -387,6 +388,7 @@ set flist {
    opcodes.c
 
    os_kfbsd.c
+   os_klinux.c
    os_kv.c
    os_unix.c
    os_win.c

@@ -68,7 +68,7 @@ LIBOBJ+= vdbe.o parse.o \
          main.o malloc.o mem0.o mem1.o mem2.o mem3.o mem5.o \
          memdb.o memjournal.o \
          mutex.o mutex_noop.o mutex_unix.o mutex_w32.o \
-         notify.o opcodes.o os.o os_kfbsd.o os_kv.o os_unix.o os_win.o \
+         notify.o opcodes.o os.o os_kfbsd.o os_klinux.o os_kv.o os_unix.o os_win.o \
          pager.o pcache.o pcache1.o pragma.o prepare.o printf.o \
          random.o resolve.o rowset.o rtree.o \
          select.o sqlite3rbu.o status.o stmt.o \
@@ -137,6 +137,8 @@ SRC = \
   $(TOP)/src/os_setup.h \
   $(TOP)/src/os_kfbsd.c \
   $(TOP)/src/os_kfbsd.h \
+  $(TOP)/src/os_klinux.c \
+  $(TOP)/src/os_klinux.h \
   $(TOP)/src/os_kv.c \
   $(TOP)/src/os_unix.c \
   $(TOP)/src/os_win.c \
@@ -399,6 +401,7 @@ TESTSRC2 = \
   $(TOP)/src/mem5.c \
   $(TOP)/src/os.c \
   $(TOP)/src/os_kfbsd.c \
+  $(TOP)/src/os_klinux.c \
   $(TOP)/src/os_kv.c \
   $(TOP)/src/os_unix.c \
   $(TOP)/src/os_win.c \
@@ -449,6 +452,7 @@ HDR = \
    $(TOP)/src/os.h \
    $(TOP)/src/os_common.h \
    $(TOP)/src/os_kfbsd.h \
+   $(TOP)/src/os_klinux.h \
    $(TOP)/src/os_setup.h \
    $(TOP)/src/os_win.h \
    $(TOP)/src/pager.h \

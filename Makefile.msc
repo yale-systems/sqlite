@@ -1362,6 +1362,7 @@ SRC00 = \
   $(TOP)\src\notify.c \
   $(TOP)\src\os.c \
   $(TOP)\src\os_kfbsd.c \
+  $(TOP)\src\os_klinux.c \
   $(TOP)\src\os_kv.c \
   $(TOP)\src\os_unix.c \
   $(TOP)\src\os_win.c
@@ -2102,6 +2103,9 @@ os.lo:	$(TOP)\src\os.c $(HDR)
 
 os_kfbsd.lo:	$(TOP)\src\os_kfbsd.c $(HDR)
 	$(LTCOMPILE) $(CORE_COMPILE_OPTS) -c $(TOP)\src\os_kfbsd.c
+
+os_klinux.lo:	$(TOP)\src\os_klinux.c $(HDR)
+	$(LTCOMPILE) $(CORE_COMPILE_OPTS) -c $(TOP)\src\os_klinux.c
 
 os_kv.lo:	$(TOP)\src\os_kv.c $(HDR)
 	$(LTCOMPILE) $(CORE_COMPILE_OPTS) -c $(TOP)\src\os_kv.c

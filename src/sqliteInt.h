@@ -108,16 +108,21 @@
 ** so the GCC_VERSION macro will be set to a correct non-zero value even
 ** when compiling with clang.
 */
+#if !defined(GCC_VERSION)
+
 #if defined(__GNUC__) && !defined(SQLITE_DISABLE_INTRINSIC)
 # define GCC_VERSION (__GNUC__*1000000+__GNUC_MINOR__*1000+__GNUC_PATCHLEVEL__)
 #else
 # define GCC_VERSION 0
 #endif
+#endif /* LNX_KERNEL */
+
 #if defined(_MSC_VER) && !defined(SQLITE_DISABLE_INTRINSIC)
 # define MSVC_VERSION _MSC_VER
 #else
 # define MSVC_VERSION 0
 #endif
+
 
 /*
 ** Some C99 functions in "math.h" are only present for MSVC when its version
@@ -285,7 +290,11 @@
 ** inlined.
 */
 #if defined(__GNUC__)
+#ifdef LNX_KERNEL
+# define SQLITE_NOINLINE noinline
+#else
 #  define SQLITE_NOINLINE  __attribute__((noinline))
+#endif /* LNX_KERNEL */
 #  define SQLITE_INLINE    __attribute__((always_inline)) inline
 #elif defined(_MSC_VER) && _MSC_VER>=1310
 #  define SQLITE_NOINLINE  __declspec(noinline)
@@ -610,14 +619,18 @@
 ** in theory, be used by the compiler to generate better code, but
 ** currently they are just comments for human readers.
 */
+#ifndef LNX_KERNEL
 #define likely(X)    (X)
 #define unlikely(X)  (X)
+#endif /* LNX_KERNEL */
 
 #include "hash.h"
 #include "parse.h"
 
-#ifdef FREEBSD_KERNEL
-//STELIOS: todo
+#if defined(LNX_KERNEL)
+// Such empty
+#elif defined(FREEBSD_KERNEL)
+// Such empty
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -756,11 +769,15 @@
 /*
 ** Macros to compute minimum and maximum of two numbers.
 */
-#ifndef MIN
+#ifdef MIN
+#ifndef LNX_KERNEL
 # define MIN(A,B) ((A)<(B)?(A):(B))
+#endif /* LNX_KERNEL */
 #endif
 #ifndef MAX
+#ifndef LNX_KERNEL
 # define MAX(A,B) ((A)>(B)?(A):(B))
+#endif /* LNX_KERNEL */
 #endif
 
 /*
@@ -2884,8 +2901,8 @@ struct AggInfo {
 ** assignAggregateRegisters() that computes the value of pAggInfo->iFirstReg.
 ** The assert()s that are part of this macro verify that constraint.
 */
-#ifdef FREEBSD_KERNEL
-//todo: STELIOS
+#if defined(FREEBSD_KERNEL) || defined(LNX_KERNEL)
+//STEL004: todo
 #define AggInfoColumnReg(A,I) (((A)->iFirstReg),(A)->iFirstReg+(I))
 #define AggInfoFuncReg(A,I) (((A)->iFirstReg),(A)->iFirstReg+(A)->nColumn+(I))
 #else

@@ -1055,7 +1055,11 @@ static int jsonParseAddNode(JsonParse*,u32,u32,const char*);
 ** inlined.
 */
 #if defined(__GNUC__)
+#if LNX_KERNEL
+#define JSON_NOINLINE noinline
+#else
 #  define JSON_NOINLINE  __attribute__((noinline))
+#endif /* LNX_KERNEL */
 #elif defined(_MSC_VER) && _MSC_VER>=1310
 #  define JSON_NOINLINE  __declspec(noinline)
 #else

@@ -1,19 +1,19 @@
 /*
-** This file contains code that is specific to the FreeBSD Kernel.
+** This file contains code that is specific to the Linux Kernel.
 */
 
 #include "sqliteInt.h"
 
-#if defined(FREEBSD_KERNEL)
+#if defined(LNX_KERNEL)
 //STEL009: TODO
 
-#include "os_kfbsd.h"
+#include "os_klinux.h"
 
 /*
 ** Initialize the operating system interface.
 */
 int sqlite3_os_init(void){
-  /* TODO: Implement FreeBSD-specific initialization here. */
+  /* TODO: Implement Linux-specific initialization here. */
   return SQLITE_OK;
 }
 
@@ -21,13 +21,16 @@ int sqlite3_os_init(void){
 ** Deinitialize the operating system interface.
 */
 int sqlite3_os_end(void){
-  /* TODO: Implement FreeBSD-specific deinitialization here. */
+  /* TODO: Implement Linux-specific deinitialization here. */
   return SQLITE_OK;
 }
 
 /*
 ** Specific code for Kernel VFS implementation.
 */
+
+//STEL015: TODO
+/*
 static int kern_vfs_open(sqlite3_vfs *vfs, sqlite3_filename zName, sqlite3_file *file,
                          int flags, int *pOutFlags) {
     struct thread *td;
@@ -183,5 +186,6 @@ sqlite3_vfs kern_vfs = {
 		kern_vfs_current_time,      // xCurrentTime
 		kern_vfs_get_last_error     // xGetLastError
 	};
+*/
 
 #endif

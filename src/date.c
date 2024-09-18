@@ -47,8 +47,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#ifdef FREEBSD_KERNEL
-//STELIOS: todo
+#if defined(FREEBSD_KERNEL) || defined(LNX_KERNEL)
+//STEL005: todo
 #else
 #include <time.h>
 #endif
@@ -1569,9 +1569,9 @@ static void ctimestampFunc(
 ** as the user-data for the function.
 */
 
-#ifdef FREEBSD_KERNEL
+#if defined(FREEBSD_KERNEL) || defined(LNX_KERNEL)
 
-//todo: STELIOS
+//STEL006: todo
 static void currentTimeFunc(
   sqlite3_context *context,
   int argc,
@@ -1604,7 +1604,11 @@ static void currentTimeFunc(
     sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
   }
   */
+#ifdef FREEBSD_KERNEL
   printf("Warning: currentTimeFunc - function is not implemented on FreeBSD Kernel. This code should not be executed!\n");
+#else
+  printk("Warning: currentTimeFunc - function is not implemented on Linux Kernel. This code should not be executed!\n");
+#endif
   zBuf[0] = '0';
   for (int i = 1; i < 20; i++) zBuf[i] = zBuf[i-1];
   sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);

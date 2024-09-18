@@ -1769,9 +1769,11 @@ static void kahanBabuskaNeumaierStep(
 ){
   volatile double s = pSum->rSum;
   volatile double t = s + r;
-  #ifdef FREEBSD_KERNEL
-  //todo: STELIOS
+  #if defined(FREEBSD_KERNEL)
+  //STEL007: todo
   printf("Warning: kahanBabuskaNeumaierStep - This path should not be traversed!\n");
+  #elif defined(LNX_KERNEL)
+  printk("Warning: kahanBabuskaNeumaierStep - This path should not be traversed!\n");
   #else
   if( fabs(s) > fabs(r) ){
     pSum->rErr += (s - t) + r;

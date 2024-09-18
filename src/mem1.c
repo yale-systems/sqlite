@@ -74,12 +74,21 @@ static malloc_zone_t* _sqliteZone_;
 ** Also used by Apple systems if SQLITE_WITHOUT_ZONEMALLOC is defined.
 */
 #ifdef FREEBSD_KERNEL
+//FreeBSD code
 #include <sys/malloc.h>
 MALLOC_DEFINE(M_SQLITE, "sqlite malloc", "Buffers to foo data	into the ether");
 #define SQLITE_MALLOC(x)            malloc(x, M_SQLITE, M_WAITOK)
 #define SQLITE_FREE(x)              free(x, M_SQLITE)
 #define SQLITE_REALLOC(x,y)         realloc((x),(y), M_SQLITE, M_WAITOK)
 MALLOC_DECLARE(M_SQLITE);
+
+#elif LNX_KERNEL
+//Linux code
+#include <linux/slab.h>
+#define SQLITE_MALLOC(x)            kmalloc((x), GFP_KERNEL)
+#define SQLITE_FREE(x)              kfree((x))
+#define SQLITE_REALLOC(x,y)         krealloc((x),(y), GFP_KERNEL)
+
 #else
 #define SQLITE_MALLOC(x)             malloc(x)
 #define SQLITE_FREE(x)               free(x)

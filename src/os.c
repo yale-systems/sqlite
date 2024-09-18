@@ -272,16 +272,20 @@ void sqlite3OsDlClose(sqlite3_vfs *pVfs, void *pHandle){
 #endif /* SQLITE_OMIT_LOAD_EXTENSION */
 int sqlite3OsRandomness(sqlite3_vfs *pVfs, int nByte, char *zBufOut){
   if( sqlite3Config.iPrngSeed ){
-    #ifdef FREEBSD_KERNEL
-    printf("Warning: sqlite3OsRandomness - The function is not yet implemented for FreeBSD Kernel!");
-    //todo: STELIOS
+    #if defined(FREEBSD_KERNEL)
+    printf("Warning: sqlite3OsRandomness - The function is not yet implemented!");
+    #elif defined(LNX_KERNEL)
+    printk("Warning: sqlite3OsRandomness - The function is not yet implemented!");
+    //STEL010: TODO
     #else
     memset(zBufOut, 0, nByte);
     #endif
     if( ALWAYS(nByte>(signed)sizeof(unsigned)) ) nByte = sizeof(unsigned int);
-    #ifdef FREEBSD_KERNEL
+    #if defined(FREEBSD_KERNEL)
     printf("Warning: sqlite3OsRandomness - this part not yet implemented\n");
-    //todo: STELIOS
+    #elif defined(LNX_KERNEL)
+    printk("Warning: sqlite3OsRandomness - this part not yet implemented\n");
+    //STEL011: TODO
     #else
     memcpy(zBufOut, &sqlite3Config.iPrngSeed, nByte);
     #endif
@@ -384,9 +388,11 @@ sqlite3_vfs *sqlite3_vfs_find(const char *zVfs){
   sqlite3_mutex_enter(mutex);
   for(pVfs = vfsList; pVfs; pVfs=pVfs->pNext){
     if( zVfs==0 ) break;
-    #ifdef FREEBSD_KERNEL
-    //todo: STELIOS
+    #if defined(FREEBSD_KERNEL)
+    //STEL011: TODO
     printf("Warning: sqlite3_vfs_find - This code is not ready yet!\n");
+    #elif defined(LNX_KERNEL)
+    printk("Warning: sqlite3_vfs_find - This code is not ready yet!\n");
     #else
     if( strcmp(zVfs, pVfs->zName)==0 ) break;
     #endif

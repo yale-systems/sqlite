@@ -2614,17 +2614,20 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Initialize a variable to indicate a FreeBSD kernel environment.
 freebsd_kernel_env=no
 
+# Initialize a variable to indicate a Linux kernel environment.
+lnx_kernel_env=no
+
 # Check if we are cross-compiling for FreeBSD kernel.
 case "$host" in
 *kfbsd*)
     freebsd_kernel_env=yes
     ;;
 *klinux*)
-    linux_kernel_env=yes
+    lnx_kernel_env=yes
     ;;
 esac
 
-if test "x$freebsd_kernel_env" == "xyes"
+if test "x$freebsd_kernel_env" == "xyes" || test "x$lnx_kernel_env" == "xyes"
 then :
 
   if test ${ac_cv_header_dlfcn_h+y}
@@ -2755,7 +2758,6 @@ fi
 
 
 fi
-
 
 sqlite_version_sanity_check=`cat $srcdir/VERSION | tr -d '\n'`
 if test "$PACKAGE_VERSION" != "$sqlite_version_sanity_check" ; then
@@ -12366,8 +12368,8 @@ fi
 
 
 
-# Exclude certain checks when in the FreeBSD kernel environment
-if test "x$freebsd_kernel_env" != "xyes"
+# Exclude certain checks when in the FreeBSD and linux kernel environment
+if test "x$freebsd_kernel_env" != "xyes" && test "x$lnx_kernel_env" != "xyes"
 then :
 
     # Standard environment checks
@@ -12523,19 +12525,6 @@ fi
 else $as_nop
 
     # Leave all other macros undefined for FreeBSD kernel
-    ac_fn_c_check_header_compile "$LINENO" "sys/stat.h" "ac_cv_header_sys_stat_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_stat_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_STAT_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "sys/types.h" "ac_cv_header_sys_types_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_types_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYS_TYPES_H 1" >>confdefs.h
-
-fi
-
 
 fi
 
@@ -12994,6 +12983,7 @@ case $host_os in
   *cygwin* ) CYGWIN=yes;;
   *kfbsd* )
 
+
 printf "%s\n" "#define FREEBSD_KERNEL 1" >>confdefs.h
 
 
@@ -13019,6 +13009,53 @@ printf "%s\n" "#define FILENAME_MAX 255" >>confdefs.h
 
 
 printf "%s\n" "#define SQLITE_MUTEX_FBSD 1" >>confdefs.h
+
+    ;;
+  *klinux* )
+
+printf "%s\n" "#define LNX_KERNEL 1" >>confdefs.h
+
+
+printf "%s\n" "#define assert(X) //STEL014: TODO" >>confdefs.h
+
+
+printf "%s\n" "#define BREEEN 1" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OS_WIN 0" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OS_UNIX 0" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OS_KV 0" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OS_OTHER 1" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OS_FBSD 0" >>confdefs.h
+
+
+printf "%s\n" "#define HAVE_ISNAN 0" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_HAVE_ISNAN 0" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OMIT_DATETIME_FUNCS 1" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OMIT_FLOATING_POINT 1" >>confdefs.h
+
+
+printf "%s\n" "#define FILENAME_MAX 255" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_MUTEX_OMIT 1" >>confdefs.h
+
+
+printf "%s\n" "#define SQLITE_OMIT_SHARED_CACHE 1" >>confdefs.h
 
     ;;
 	 * ) CYGWIN=no;;
@@ -13674,7 +13711,7 @@ fi
 
 
 # Exclude certain checks when in the FreeBSD kernel environment
-if test "x$freebsd_kernel_env" != "xyes"
+if test "x$freebsd_kernel_env" != "xyes" && test "x$lnx_kernel_env" != "xyes"
 then :
 
     # Look for zlib.  Only needed by extensions and by the sqlite3.exe shell
@@ -13750,7 +13787,7 @@ fi
 
 else $as_nop
 
-    # Keep undefined for a FreeBSD kernel environment
+    # Keep undefined for a FreeBSD or Linux kernel environment
 
 fi
 

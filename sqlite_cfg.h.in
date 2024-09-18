@@ -1,6 +1,9 @@
 /* sqlite_cfg.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Maximum filename for FreeBSD Kernel */
+/* Breeen */
+#undef BREEEN
+
+/* Maximum filename for Linux Kernel */
 #undef FILENAME_MAX
 
 /* Define to 1 if compiling for FreeBSD Kernel */
@@ -33,7 +36,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `isnan' function. */
+/* No such function should be assumed to exist in the kernel */
 #undef HAVE_ISNAN
 
 /* Define to 1 if you have the `localtime_r' function. */
@@ -111,6 +114,9 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
 
+/* Define to 1 if compiling for Linux Kernel */
+#undef LNX_KERNEL
+
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
@@ -132,20 +138,42 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* No such function should be assumed to exist in the kernel */
+#undef SQLITE_HAVE_ISNAN
+
 /* Use kernel mutexes */
 #undef SQLITE_MUTEX_FBSD
 
-/* FreeBSD Kernel uses no datetime functions */
+/* STEL016: TODO, omit mutexes for now for Linux Kernel, must be done at some
+   point */
+#undef SQLITE_MUTEX_OMIT
+
+/* Linux Kernel uses no datetime functions */
 #undef SQLITE_OMIT_DATETIME_FUNCS
 
 /* Solves issues with initialization of SQLite */
 #undef SQLITE_OMIT_DESERIALIZE
 
-/* FreeBSD Kernel uses no floating point functions */
+/* Linux Kernel uses no floating point functions */
 #undef SQLITE_OMIT_FLOATING_POINT
 
-/* FreeBSD Kernel is a different OS */
+/* STEL017: TODO, omit shared cache for now until mutexes are done */
+#undef SQLITE_OMIT_SHARED_CACHE
+
+/* Linux Kernel is not FreeBSD */
+#undef SQLITE_OS_FBSD
+
+/* Linux Kernel is not a KV OS */
+#undef SQLITE_OS_KV
+
+/* Linux Kernel is a different OS */
 #undef SQLITE_OS_OTHER
+
+/* Linux Kernel is not a userspace Unix OS */
+#undef SQLITE_OS_UNIX
+
+/* Linux Kernel is not a Windows OS */
+#undef SQLITE_OS_WIN
 
 /* FreeBSD Kernel is a different OS */
 #undef SQLITE_THREADSAFE
