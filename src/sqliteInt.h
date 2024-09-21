@@ -109,7 +109,9 @@
 ** when compiling with clang.
 */
 #if defined(__GNUC__) && !defined(SQLITE_DISABLE_INTRINSIC)
+#ifndef GCC_VERSION
 # define GCC_VERSION (__GNUC__*1000000+__GNUC_MINOR__*1000+__GNUC_PATCHLEVEL__)
+#endif
 #else
 # define GCC_VERSION 0
 #endif
@@ -243,11 +245,15 @@
 /*
 ** Include standard header files as necessary
 */
+#if defined(LINUX_KERNEL_BUILD) && (defined(HAVE_STDINT_H) || defined(HAVE_INTTYPES_H))
+#include <linux/types.h>
+#else
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #endif
 
 /*
@@ -285,8 +291,13 @@
 ** inlined.
 */
 #if defined(__GNUC__)
-#  define SQLITE_NOINLINE  __attribute__((noinline))
-#  define SQLITE_INLINE    __attribute__((always_inline)) inline
+#  if defined(LINUX_KERNEL_BUILD)
+#    define SQLITE_NOINLINE  noinline
+#    define SQLITE_INLINE    __attribute__((always_inline)) inline
+#  else
+#    define SQLITE_NOINLINE  __attribute__((noinline))
+#    define SQLITE_INLINE    __attribute__((always_inline)) inline
+#  endif
 #elif defined(_MSC_VER) && _MSC_VER>=1310
 #  define SQLITE_NOINLINE  __declspec(noinline)
 #  define SQLITE_INLINE    __forceinline
@@ -610,20 +621,33 @@
 ** in theory, be used by the compiler to generate better code, but
 ** currently they are just comments for human readers.
 */
-#define likely(X)    (X)
-#define unlikely(X)  (X)
+#if !defined(likely)
+#  define likely(X)    (X)
+#endif
+#if !defined(unlikely)
+#  define unlikely(X)  (X)
+#endif
+
 
 #include "hash.h"
 #include "parse.h"
 
 #ifdef FREEBSD_KERNEL
-//STELIOS: todo
+#elif defined(LINUX_KERNEL_BUILD)
+#  include <linux/printk.h>
+#  ifdef NDEBUG
+#    define assert(condition) ((void)0)
+#  else
+#    define assert(condition)						\
+    ((condition) ? (void)0 : pr_err("Assertion failed: %s, file %s, line %u, function %s\n", #condition, __FILE__, __LINE__, __func__))
+
+#  endif
 #else
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <stddef.h>
+#  include <stdio.h>
+#  include <stdlib.h>
+#  include <string.h>
+#  include <assert.h>
+#  include <stddef.h>
 #endif
 
 /*
@@ -4852,7 +4876,7 @@ i16 sqlite3TableColumnToIndex(Index*, i16);
   i16 sqlite3StorageColumnToTable(Table*, i16);
 #endif
 void sqlite3StartTable(Parse*,Token*,Token*,int,int,int,int);
-#if SQLITE_ENABLE_HIDDEN_COLUMNS
+#if defined(SQLITE_ENABLE_HIDDEN_COLUMNS)
   void sqlite3ColumnPropertiesFromName(Table*, Column*);
 #else
 # define sqlite3ColumnPropertiesFromName(T,C) /* no-op */

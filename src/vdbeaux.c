@@ -637,7 +637,7 @@ static SQLITE_NOINLINE void resizeResolveLabel(Parse *p, Vdbe *v, int j){
 }
 void sqlite3VdbeResolveLabel(Vdbe *v, int x){
   Parse *p = v->pParse;
-  int j = ADDR(x);
+  int j = LABEL_INDEX(x);
   assert( v->eVdbeState==VDBE_INIT_STATE );
   assert( j<-p->nLabel );
   assert( j>=0 );
@@ -934,9 +934,9 @@ static void resolveP2Values(Vdbe *p, int *pMaxFuncArgs){
             ** non-jump opcodes less than SQLITE_MX_JUMP_CODE are guaranteed to
             ** have non-negative values for P2. */
             assert( (sqlite3OpcodeProperty[pOp->opcode] & OPFLG_JUMP)!=0 );
-            assert( ADDR(pOp->p2)<-pParse->nLabel );
+            assert( LABEL_INDEX(pOp->p2)<-pParse->nLabel );
             assert( aLabel!=0 );  /* True because of tag-20230419-1 */
-            pOp->p2 = aLabel[ADDR(pOp->p2)];
+            pOp->p2 = aLabel[LABEL_INDEX(pOp->p2)];
           }
           break;
         }
@@ -1007,7 +1007,7 @@ void sqlite3VdbeNoJumpsOutsideSubrtn(
         continue;
       }
       if( iDest<0 ){
-        int j = ADDR(iDest);
+        int j = LABEL_INDEX(iDest);
         assert( j>=0 );
         if( j>=-pParse->nLabel || pParse->aLabel[j]<0 ){
           continue;

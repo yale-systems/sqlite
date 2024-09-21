@@ -17,7 +17,7 @@
 */
 #include "sqliteInt.h"
 #include <stdarg.h>
-#ifndef SQLITE_OMIT_FLOATING_POINT
+#if !defined(SQLITE_OMIT_FLOATING_POINT) && !defined(LINUX_KERNEL_BUILD)
 #include <math.h>
 #endif
 
@@ -47,7 +47,7 @@ int sqlite3FaultSim(int iTest){
 }
 #endif
 
-#ifndef SQLITE_OMIT_FLOATING_POINT
+#if !defined(SQLITE_OMIT_FLOATING_POINT) && !defined(LINUX_KERNEL_BUILD)
 /*
 ** Return true if the floating point value is Not a Number (NaN).
 **

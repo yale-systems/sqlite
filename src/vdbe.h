@@ -157,7 +157,7 @@ typedef struct VdbeOpList VdbeOpList;
 ** into an index into the Parse.aLabel[] array that contains the resolved
 ** address of that label.
 */
-#define ADDR(X)  (~(X))
+#define LABEL_INDEX(X)  (~(X))
 
 /*
 ** The makefile scans the vdbe.c source file and creates the "opcodes.h"

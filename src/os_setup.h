@@ -46,7 +46,7 @@
 #    define SQLITE_OS_UNIX 1
 #  endif
 #endif
-#if SQLITE_OS_OTHER+1>1
+#if defined(SQLITE_OS_OTHER) && SQLITE_OS_OTHER+1>1
 #  undef SQLITE_OS_KV
 #  define SQLITE_OS_KV 0
 #  undef SQLITE_OS_UNIX
@@ -54,7 +54,7 @@
 #  undef SQLITE_OS_WIN
 #  define SQLITE_OS_WIN 0
 #endif
-#if SQLITE_OS_KV+1>1
+#if defined(SQLITE_OS_OTHER) && SQLITE_OS_KV+1>1
 #  undef SQLITE_OS_OTHER
 #  define SQLITE_OS_OTHER 0
 #  undef SQLITE_OS_UNIX

@@ -36,7 +36,7 @@
 #include "sqlite_cfg.h"
 
 #if defined(FREEBSD_KERNEL) && defined(LINUX_KERNEL_BUILD)
-#error "FREEBSD_KERNEL and LINUX_KERNEL_BUILD cannot be defined at the same time"
+#  error "FREEBSD_KERNEL and LINUX_KERNEL_BUILD cannot be defined at the same time"
 #endif
 
 #if defined(FREEBSD_KERNEL)
@@ -77,9 +77,10 @@
 MALLOC_DECLARE(M_SQLITE);
 #include <sys/malloc.h>
 #elif defined(LINUX_KERNEL_BUILD)
-#include <linux/stdarg.h>
+#  include <linux/compiler.h>
+#  include <linux/stdarg.h>
 #else
-#include <stdarg.h>     /* Needed for the definition of va_list */
+#  include <stdarg.h>     /* Needed for the definition of va_list */
 #endif
 
 /*
