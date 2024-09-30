@@ -44,7 +44,7 @@
 **      plus implementations of sqlite3_os_init() and sqlite3_os_end().
 */
 #include "sqliteInt.h"
-#if SQLITE_OS_UNIX              /* This file is used on unix only */
+#if SQLITE_OS_UNIX && !defined(LINUX_KERNEL_BUILD)   /* This file is used on unix only */
 
 /*
 ** There are various methods for file locking used for concurrency
@@ -87,32 +87,25 @@
 /*
 ** standard include files.
 */
-#if defined(LINUX_KERNEL_BUILD)
-# include <linux/fs.h>
-# include <linux/errno.h>
-
-static int errno = 0;
-
-#else
-# include <sys/types.h>   /* amalgamator: keep */
-# include <sys/stat.h>    /* amalgamator: keep */
-# include <fcntl.h>
-# include <sys/ioctl.h>
-# include <unistd.h>      /* amalgamator: keep */
-# include <time.h>
-# include <sys/time.h>    /* amalgamator: keep */
-# include <errno.h>
-# if (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0) \
+#include <sys/types.h>   /* amalgamator: keep */
+#include <sys/stat.h>    /* amalgamator: keep */
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>      /* amalgamator: keep */
+#include <time.h>
+#include <sys/time.h>    /* amalgamator: keep */
+#include <errno.h>
+#if (!defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0) \
   && !defined(SQLITE_WASI)
-#  include <sys/mman.h>
-# endif
-
-# if SQLITE_ENABLE_LOCKING_STYLE
-#  include <sys/ioctl.h>
-#  include <sys/file.h>
-#  include <sys/param.h>
-# endif /* SQLITE_ENABLE_LOCKING_STYLE */
+# include <sys/mman.h>
 #endif
+
+#if SQLITE_ENABLE_LOCKING_STYLE
+# include <sys/ioctl.h>
+# include <sys/file.h>
+# include <sys/param.h>
+#endif /* SQLITE_ENABLE_LOCKING_STYLE */
+
 
 /*
 ** Try to determine if gethostuuid() is available based on standard
@@ -152,7 +145,7 @@ static int errno = 0;
 # include <sys/mount.h>
 #endif
 
-#if !defined(LINUX_KERNEL_BUILD) && defined(HAVE_UTIME)
+#ifdef HAVE_UTIME
 # include <utime.h>
 #endif
 
@@ -266,11 +259,7 @@ struct unixFile {
   sqlite3_io_methods const *pMethod;  /* Always the first entry */
   sqlite3_vfs *pVfs;                  /* The VFS that created this unixFile */
   unixInodeInfo *pInode;              /* Info about locks on this inode */
-#if defined(LINUX_KERNEL_BUILD)
-  struct file *h;
-#else
   int h;                              /* The file descriptor */
-#endif
   unsigned char eFileLock;            /* The type of lock held on this fd */
   unsigned short int ctrlFlags;       /* Behavioral bits.  UNIXFILE_* flags */
   int lastErrno;                      /* The unix errno from last I/O error */
@@ -409,8 +398,6 @@ static pid_t randomnessPid = 0;
 #endif /* __linux__ */
 
 
-
-#if !defined(LINUX_KERNEL_BUILD)
 /*
 ** Different Unix systems declare open() in different ways.  Same use
 ** open(const char*,int,mode_t).  Others use open(const char*,int,...).
@@ -422,16 +409,6 @@ static pid_t randomnessPid = 0;
 static int posixOpen(const char *zFile, int flags, int mode){
   return open(zFile, flags, mode);
 }
-#endif
-
-
-#if defined(LINUX_KERNEL_BUILD)
-static int linux_close(struct file *filep)
-{
-    return filp_close(filep, NULL);
-}
-
-#endif
 
 /* Forward reference */
 static int openDirectory(const char*, int*);
@@ -443,55 +420,6 @@ static int unixGetpagesize(void);
 ** testing and sandboxing.  The following array holds the names and pointers
 ** to all overrideable system calls.
 */
-#if defined(LINUX_KERNEL_BUILD)
-static struct unix_syscall {
-  const char *zName;            /* Name of the system call */
-  sqlite3_syscall_ptr pCurrent; /* Current value of the system call */
-  sqlite3_syscall_ptr pDefault; /* Default value */
-} aSyscall[] = {
-  { "open",         (sqlite3_syscall_ptr)filp_open,  0  },
-#define osOpen      ((struct file *(*)(const char*,int,int))aSyscall[0].pCurrent)
-
-  { "close",        (sqlite3_syscall_ptr)linux_close,      0  },
-#define osClose     ((int(*)(struct file *))aSyscall[1].pCurrent)
-
-  { "access",       (sqlite3_syscall_ptr)0,     0  },
-  { "getcwd",       (sqlite3_syscall_ptr)0,     0  },
-  { "stat",         (sqlite3_syscall_ptr)0,       0  },
-  { "fstat",        0,                 0  },
-  { "ftruncate",    (sqlite3_syscall_ptr)0,  0  },
-  { "fcntl",        (sqlite3_syscall_ptr)0,      0  },
-  { "read",         (sqlite3_syscall_ptr)0,       0  },
-  { "pread",        (sqlite3_syscall_ptr)0,          0  },
-  { "pread64",      (sqlite3_syscall_ptr)0,          0  },
-  { "write",        (sqlite3_syscall_ptr)0,      0  },
-  { "pwrite",       (sqlite3_syscall_ptr)0,          0  },
-  { "pwrite64",     (sqlite3_syscall_ptr)0,          0  },
-  { "fchmod",       (sqlite3_syscall_ptr)0,               0  },
-  { "fallocate",    (sqlite3_syscall_ptr)0,                0 },
-  { "unlink",       (sqlite3_syscall_ptr)0,           0 },
-  { "openDirectory",    (sqlite3_syscall_ptr)0,      0 },
-  { "mkdir",        (sqlite3_syscall_ptr)0,           0 },
-  { "rmdir",        (sqlite3_syscall_ptr)0,           0 },
-#if defined(HAVE_FCHOWN)
-  { "fchown",       (sqlite3_syscall_ptr)0,               0 },
-  { "geteuid",      (sqlite3_syscall_ptr)0,               0 },
-#else
-  { "fchown",       (sqlite3_syscall_ptr)0,               0 },
-  { "geteuid",      (sqlite3_syscall_ptr)0,               0 },
-#endif
-#define osGeteuid   ((uid_t(*)(void))aSyscall[21].pCurrent)
-  { "mmap",         (sqlite3_syscall_ptr)0,               0 },
-  { "munmap",       (sqlite3_syscall_ptr)0,               0 },
-  { "mremap",       (sqlite3_syscall_ptr)0,               0 },
-  { "getpagesize",  (sqlite3_syscall_ptr)0,               0 },
-  { "readlink",     (sqlite3_syscall_ptr)0,               0 },
-  { "lstat",         (sqlite3_syscall_ptr)0,              0 },
-  { "ioctl",         (sqlite3_syscall_ptr)0,              0 },
-};
-
-
-#else
 static struct unix_syscall {
   const char *zName;            /* Name of the system call */
   sqlite3_syscall_ptr pCurrent; /* Current value of the system call */
@@ -665,7 +593,6 @@ static struct unix_syscall {
 #endif
 
 }; /* End of the overrideable system calls */
-#endif
 
 /*
 ** On some systems, calls to fchown() will trigger a message in a security
