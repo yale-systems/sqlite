@@ -44,7 +44,7 @@
 **      plus implementations of sqlite3_os_init() and sqlite3_os_end().
 */
 #include "sqliteInt.h"
-#if SQLITE_OS_UNIX && !defined(LINUX_KERNEL_BUILD)   /* This file is used on unix only */
+#if SQLITE_OS_UNIX              /* This file is used on unix only */
 
 /*
 ** There are various methods for file locking used for concurrency
@@ -105,7 +105,6 @@
 # include <sys/file.h>
 # include <sys/param.h>
 #endif /* SQLITE_ENABLE_LOCKING_STYLE */
-
 
 /*
 ** Try to determine if gethostuuid() is available based on standard

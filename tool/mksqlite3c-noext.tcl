@@ -103,6 +103,7 @@ foreach hdr {
    opcodes.h
    os_common.h
    os_kfbsd.h
+   os_klinux.h
    os_setup.h
    os_win.h
    os.h
@@ -303,6 +304,7 @@ foreach file {
    hash.c
    opcodes.c
 
+   os_klinux.c
    os_unix.c
    os_win.c
 
