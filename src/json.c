@@ -1058,7 +1058,7 @@ static int jsonParseAddNode(JsonParse*,u32,u32,const char*);
 #  define JSON_NOINLINE noinline
 #elif defined(__GNUC__)
 #  define JSON_NOINLINE  __attribute__((noinline))
-#elif defined(_MSC_VER) && _MSC_VER>=1310
+#elif (defined(_MSC_VER) && _MSC_VER>=1310 && !defined(LINUX_KERNEL_BUILD))
 #  define JSON_NOINLINE  __declspec(noinline)
 #else
 #  define JSON_NOINLINE
