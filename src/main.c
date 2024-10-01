@@ -1444,7 +1444,7 @@ void sqlite3LeaveMutexAndCloseZombie(sqlite3 *db){
   sqlite3Error(db, SQLITE_OK); /* Deallocates any cached error strings. */
   sqlite3ValueFree(db->pErr);
   sqlite3CloseExtensions(db);
-#if SQLITE_USER_AUTHENTICATION
+#if defined(SQLITE_USER_AUTHENTICATION)
   sqlite3_free(db->auth.zAuthUser);
   sqlite3_free(db->auth.zAuthPW);
 #endif
@@ -3376,7 +3376,7 @@ static int openDatabase(
 #if !defined(SQLITE_DEFAULT_AUTOMATIC_INDEX) || SQLITE_DEFAULT_AUTOMATIC_INDEX
                  | SQLITE_AutoIndex
 #endif
-#if SQLITE_DEFAULT_CKPTFULLFSYNC
+#if defined(SQLITE_DEFAULT_CKPTFULLFSYNC)
                  | SQLITE_CkptFullFSync
 #endif
 #if SQLITE_DEFAULT_FILE_FORMAT<4
