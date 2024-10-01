@@ -4481,6 +4481,11 @@ static int SQLITE_NOINLINE doubleEq(double a, double b){ return a==b; }
 ** equal to, or greater than the second (double).
 */
 int sqlite3IntFloatCompare(i64 i, double r){
+#if defined(SQLITE_OMIT_FLOATING_POINT)
+  if (i < r) return -1;
+  else if (r == i) return 0;
+  else return 1;
+#else
   if( sqlite3IsNaN(r) ){
     /* SQLite considers NaN to be a NULL. And all integer values are greater
     ** than NULL */
@@ -4506,6 +4511,7 @@ int sqlite3IntFloatCompare(i64 i, double r){
     testcase( doubleEq(r,s) );
     return (s<r) ? -1 : (s>r);
   }
+#endif
 }
 
 /*

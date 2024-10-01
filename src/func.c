@@ -2529,7 +2529,11 @@ static void signFunc(
   type0 = sqlite3_value_numeric_type(argv[0]);
   if( type0!=SQLITE_INTEGER && type0!=SQLITE_FLOAT ) return;
   x = sqlite3_value_double(argv[0]);
+#if defined(SQLITE_OMIT_FLOATING_POINT)
+  sqlite3_result_int(context, x<0 ? -1 : x>0 ? +1 : 0);
+#else
   sqlite3_result_int(context, x<0.0 ? -1 : x>0.0 ? +1 : 0);
+#endif
 }
 
 #ifdef SQLITE_DEBUG

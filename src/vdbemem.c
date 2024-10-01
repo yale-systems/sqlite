@@ -680,7 +680,11 @@ int sqlite3VdbeBooleanValue(Mem *pMem, int ifNull){
   testcase( pMem->flags & MEM_IntReal );
   if( pMem->flags & (MEM_Int|MEM_IntReal) ) return pMem->u.i!=0;
   if( pMem->flags & MEM_Null ) return ifNull;
+#if defined(SQLITE_OMIT_FLOATING_POINT)
+  return sqlite3VdbeRealValue(pMem)!=0;
+#else
   return sqlite3VdbeRealValue(pMem)!=0.0;
+#endif
 }
 
 /*
@@ -754,10 +758,14 @@ int sqlite3VdbeMemRealify(Mem *pMem){
 ** though the r1 and (double)i values are bit-for-bit the same.
 */
 int sqlite3RealSameAsInt(double r1, sqlite3_int64 i){
+#if defined(SQLITE_OMIT_FLOATING_POINT)
+  return i == r1;
+#else
   double r2 = (double)i;
   return r1==0.0
       || (memcmp(&r1, &r2, sizeof(r1))==0
           && i >= -2251799813685248LL && i < 2251799813685248LL);
+#endif
 }
 
 /* Convert a floating point value to its closest integer.  Do so in
