@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #ifndef SQLITE_OMIT_FLOATING_POINT
-#include <math.h>
+# include <math.h>
 #endif
 #include "vdbeInt.h"
 
@@ -1769,16 +1769,19 @@ static void kahanBabuskaNeumaierStep(
 ){
   volatile double s = pSum->rSum;
   volatile double t = s + r;
-  #ifdef FREEBSD_KERNEL
-  //todo: STELIOS
+#ifdef SQLITE_OMIT_FLOATING_POINT
+# if defined(LINUX_KERNEL_BUILD)
+  pr_err("Warning: kahanBabuskaNeumaierStep - This path should not be traversed!\n");
+# else
   printf("Warning: kahanBabuskaNeumaierStep - This path should not be traversed!\n");
-  #else
+# endif
+#else
   if( fabs(s) > fabs(r) ){
     pSum->rErr += (s - t) + r;
   }else{
     pSum->rErr += (r - t) + s;
   }
-  #endif
+#endif
   pSum->rSum = t;
 }
 
@@ -2594,7 +2597,7 @@ void sqlite3RegisterBuiltinFunctions(void){
     SFUNCTION(load_extension,    1, 0, 0, loadExt          ),
     SFUNCTION(load_extension,    2, 0, 0, loadExt          ),
 #endif
-#if SQLITE_USER_AUTHENTICATION
+#if defined(SQLITE_USER_AUTHENTICATION)
     FUNCTION(sqlite_crypt,       2, 0, 0, sqlite3CryptFunc ),
 #endif
 #ifndef SQLITE_OMIT_COMPILEOPTION_DIAGS

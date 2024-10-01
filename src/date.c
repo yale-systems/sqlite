@@ -52,7 +52,7 @@
 #endif
 
 
-#if !defined(SQLITE_OMIT_DATETIME_FUNCS) && !defined(LINUX_KERNEL_BUILD)
+#if !defined(SQLITE_OMIT_DATETIME_FUNCS)
 
 /*
 ** The MSVC CRT on Windows CE may not have a localtime() function.

@@ -13,7 +13,7 @@ int sqlite3_os_init(void){
 ** Deinitialize the operating system interface.
 */
 int sqlite3_os_end(void){
-    return SQLITE_OK;
+  return SQLITE_OK;
 }
 
 #endif

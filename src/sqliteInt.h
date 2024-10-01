@@ -666,6 +666,10 @@
 ** If compiling for a processor that lacks floating point support,
 ** substitute integer for floating-point
 */
+#if defined(LINUX_KERNEL_BUILD) && !defined(SQLITE_OMIT_FLOATING_POINT)
+# define SQLITE_OMIT_FLOATING_POINT
+#endif
+
 #ifdef SQLITE_OMIT_FLOATING_POINT
 # define double sqlite_int64
 # define float sqlite_int64

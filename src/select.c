@@ -6313,7 +6313,7 @@ static int selectExpander(Walker *pWalker, Select *p){
   return WRC_Continue;
 }
 
-#if SQLITE_DEBUG
+#if defined(SQLITE_DEBUG)
 /*
 ** Always assert.  This xSelectCallback2 implementation proves that the
 ** xSelectCallback2 is never invoked.

@@ -129,6 +129,7 @@ MALLOC_DECLARE(M_SQLITE);
 #        define SQLITE_MALLOCSIZE      _msize
 #      endif
 #    endif
+#  endif
 #endif /* defined(SQLITE_USE_MALLOC_H) */
 
 #endif /* __APPLE__ or not __APPLE__ */

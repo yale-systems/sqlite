@@ -4150,7 +4150,7 @@ static int exprCodeVector(Parse *pParse, Expr *p, int *piFreeable){
   }else{
     *piFreeable = 0;
     if( p->op==TK_SELECT ){
-#if SQLITE_OMIT_SUBQUERY
+#if defined(SQLITE_OMIT_SUBQUERY)
       iResult = 0;
 #else
       iResult = sqlite3CodeSubselect(pParse, p);

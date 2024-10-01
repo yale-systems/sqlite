@@ -2599,13 +2599,13 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   */
   if( pBuilder->pOrSet!=0 ){
     if( pTemplate->nLTerm ){
-#if WHERETRACE_ENABLED
+#if defined(WHERETRACE_ENABLED)
       u16 n = pBuilder->pOrSet->n;
       int x =
 #endif
       whereOrInsert(pBuilder->pOrSet, pTemplate->prereq, pTemplate->rRun,
                                     pTemplate->nOut);
-#if WHERETRACE_ENABLED /* 0x8 */
+#if defined(WHERETRACE_ENABLED) /* 0x8 */
       if( sqlite3WhereTrace & 0x8 ){
         sqlite3DebugPrintf(x?"   or-%d:  ":"   or-X:  ", n);
         sqlite3WhereLoopPrint(pTemplate, pBuilder->pWC);
@@ -2622,7 +2622,7 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   if( ppPrev==0 ){
     /* There already exists a WhereLoop on the list that is better
     ** than pTemplate, so just ignore pTemplate */
-#if WHERETRACE_ENABLED /* 0x8 */
+#if defined(WHERETRACE_ENABLED) /* 0x8 */
     if( sqlite3WhereTrace & 0x8 ){
       sqlite3DebugPrintf("   skip: ");
       sqlite3WhereLoopPrint(pTemplate, pBuilder->pWC);
@@ -2637,7 +2637,7 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
   ** with pTemplate[] if p[] exists, or if p==NULL then allocate a new
   ** WhereLoop and insert it.
   */
-#if WHERETRACE_ENABLED /* 0x8 */
+#if defined(WHERETRACE_ENABLED) /* 0x8 */
   if( sqlite3WhereTrace & 0x8 ){
     if( p!=0 ){
       sqlite3DebugPrintf("replace: ");
@@ -2667,7 +2667,7 @@ static int whereLoopInsert(WhereLoopBuilder *pBuilder, WhereLoop *pTemplate){
       pToDel = *ppTail;
       if( pToDel==0 ) break;
       *ppTail = pToDel->pNextLoop;
-#if WHERETRACE_ENABLED /* 0x8 */
+#if defined(WHERETRACE_ENABLED) /* 0x8 */
       if( sqlite3WhereTrace & 0x8 ){
         sqlite3DebugPrintf(" delete: ");
         sqlite3WhereLoopPrint(pToDel, pBuilder->pWC);
@@ -3155,7 +3155,7 @@ static int whereLoopAddBtreeIndex(
              ** See tag-202002240-1 */
              && pNew->nOut+10 > pProbe->aiRowLogEst[0]
             ){
-#if WHERETRACE_ENABLED /* 0x01 */
+#if defined(WHERETRACE_ENABLED) /* 0x01 */
               if( sqlite3WhereTrace & 0x20 ){
                 sqlite3DebugPrintf(
                    "STAT4 determines term has low selectivity:\n");
@@ -6023,7 +6023,7 @@ WhereInfo *sqlite3WhereBegin(
   pWInfo->pParse = pParse;
   pWInfo->pTabList = pTabList;
   pWInfo->pOrderBy = pOrderBy;
-#if WHERETRACE_ENABLED
+#if defined(WHERETRACE_ENABLED)
   pWInfo->pWhere = pWhere;
 #endif
   pWInfo->pResultSet = pResultSet;
