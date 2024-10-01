@@ -4639,7 +4639,7 @@ expr_code_doover:
     case TK_ISNOT:
       op = (op==TK_IS) ? TK_EQ : TK_NE;
       p5 = SQLITE_NULLEQ;
-      /* fall-through */
+      /* fall-through */ deliberate_fall_through
     case TK_LT:
     case TK_LE:
     case TK_GT:

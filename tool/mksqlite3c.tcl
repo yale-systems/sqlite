@@ -375,6 +375,7 @@ set flist {
    mutex.c
    mutex_noop.c
    mutex_fbsd.c
+   mutex_klinux.c
    mutex_unix.c
    mutex_w32.c
    malloc.c

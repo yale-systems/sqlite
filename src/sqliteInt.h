@@ -147,8 +147,8 @@
 */
 #if GCC_VERSION>=7000000
 # define deliberate_fall_through __attribute__((fallthrough));
-#else
-# define deliberate_fall_through
+#elif defined(LINUX_KERNEL_BUILD)
+# define deliberate_fall_through fallthrough;
 #endif
 
 /*
@@ -4683,7 +4683,6 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys3(void);
 #ifndef SQLITE_MUTEX_OMIT
   sqlite3_mutex_methods const *sqlite3DefaultMutex(void);
   sqlite3_mutex_methods const *sqlite3NoopMutex(void);
-  sqlite3_mutex_methods const *sqlite3FbsdMutex(void);
   sqlite3_mutex *sqlite3MutexAlloc(int);
   int sqlite3MutexInit(void);
   int sqlite3MutexEnd(void);

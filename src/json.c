@@ -1746,7 +1746,7 @@ json_parse_restart:
       jsonParseAddNode(pParse, JSON_NULL, 0, 0);
       return i+4;
     }
-    /* fall-through into the default case that checks for NaN */
+    /* fall-through into the default case that checks for NaN */ deliberate_fall_through
   }
   default: {
     u32 k;
