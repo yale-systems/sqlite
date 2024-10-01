@@ -272,7 +272,7 @@
 ** So we have to define the macros in different ways depending on the
 ** compiler.
 */
-#if defined(HAVE_STDINT_H)   /* Use this case if we have ANSI headers */
+#if (defined(HAVE_STDINT_H) && !defined(LINUX_KERNEL_BUILD))   /* Use this case if we have ANSI headers */
 # define SQLITE_INT_TO_PTR(X)  ((void*)(intptr_t)(X))
 # define SQLITE_PTR_TO_INT(X)  ((int)(intptr_t)(X))
 #elif defined(__PTRDIFF_TYPE__)  /* This case should work for GCC */
