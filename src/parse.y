@@ -84,7 +84,7 @@
 ** and the sqlite3ParserAlloc() and sqlite3ParserFree() routines can be
 ** omitted.
 */
-#ifdef SQLITE_AMALGAMATION
+#if defined(SQLITE_AMALGAMATION) && !defined(LINUX_KERNEL_BUILD)
 # define sqlite3Parser_ENGINEALWAYSONSTACK 1
 #endif
 

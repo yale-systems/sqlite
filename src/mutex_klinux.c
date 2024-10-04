@@ -14,58 +14,106 @@
 ** FreeBSD kernel.
 **
 */
+
 #include "sqliteInt.h"
 
 #ifdef LINUX_KERNEL_BUILD
 
 #include <linux/mutex.h>
-DEFINE_MUTEX(sqlite3_mu);
-static int sqlite3_mu_initialized = 0;
 
-static int klinuxMutexInit(void) {
-  if (!sqlite3_mu_initialized) {
-    mutex_init(&sqlite3_mu);
-    sqlite3_mu_initialized = 1;
+
+struct sqlite3_mutex {
+  struct mutex mutex;
+  int type;
+  volatile struct task_struct *owner;
+  volatile int refs;
+};
+
+static struct sqlite3_mutex mutexes[12];
+
+
+static int klinuxMutexInit(void){
+  for (int i = 2; i < 14; ++i) {
+    mutex_init(&mutexes[i-2].mutex);
+    mutexes[i-2].type = i;
+    mutexes[i-2].owner = NULL;
+    mutexes[i-2].refs = 0;
   }
 
   return SQLITE_OK;
 }
 
-static int klinuxMutexEnd(void) {
-  sqlite3_mu_initialized = 0;
+static int klinuxMutexEnd(void){
   return SQLITE_OK;
 }
 
-static sqlite3_mutex *klinuxMutexAlloc(int id){ 
-  UNUSED_PARAMETER(id);
+static sqlite3_mutex *klinuxMutexAlloc(int type){
+  sqlite3_mutex *p;
 
-  return ((sqlite3_mutex *)&sqlite3_mu); 
+  switch(type) {
+  case SQLITE_MUTEX_RECURSIVE:
+    p = sqlite3Malloc(sizeof(struct sqlite3_mutex));
+    if (p) {
+      mutex_init(&p->mutex);
+      p->type = SQLITE_MUTEX_RECURSIVE;
+      p->refs = 0;
+      p->owner = NULL;
+    }
+    break;
+  case SQLITE_MUTEX_FAST:
+    p = sqlite3Malloc(sizeof(struct sqlite3_mutex));
+    if (p) {
+      mutex_init(&p->mutex);
+      p->type = SQLITE_MUTEX_FAST;
+    }
+    break;
+  default:
+    p = &mutexes[type-2];
+    break;
+  }
+
+  return p;
 }
 
-static void klinuxMutexFree(sqlite3_mutex *p) {
-  UNUSED_PARAMETER(p);
+static void klinuxMutexFree(sqlite3_mutex *p){
+  sqlite3_free(p);
 }
 
-static void klinuxMutexEnter(sqlite3_mutex *p){ 
-  UNUSED_PARAMETER(p);
-  mutex_lock(&sqlite3_mu);
+static void klinuxMutexEnter(sqlite3_mutex *p){
+  struct task_struct *self = current;
+  if (p->refs > 0 && self == p->owner) p->refs++;
+  else {
+    mutex_lock(&p->mutex);
+    p->owner = self;
+    p->refs = 1;
+  }
 }
 
 static int klinuxMutexTry(sqlite3_mutex *p){
-  UNUSED_PARAMETER(p);
-  if (!mutex_trylock(&sqlite3_mu))
-    return SQLITE_BUSY;
-  return SQLITE_OK;
+  struct task_struct *self = current;
+  if (p->refs > 0 && self == p->owner) {
+      p->refs++;
+      return SQLITE_OK;
+  } else if (mutex_trylock(&p->mutex)) {
+      p->owner = self;
+      p->refs = 1;
+      return SQLITE_OK;
+  } else {
+      return SQLITE_BUSY;
+  }
 }
 
 static void klinuxMutexLeave(sqlite3_mutex *p) {
-  UNUSED_PARAMETER(p);
-  mutex_unlock(&sqlite3_mu);
+  p->refs--;
+  if (p->refs == 0) {
+      p->owner = 0;
+      mutex_unlock(&p->mutex);
+  }
 }
 
 
 sqlite3_mutex_methods const *sqlite3DefaultMutex(void){
-  static const sqlite3_mutex_methods mutex_vtable = {
+  static const sqlite3_mutex_methods sMutex = {
     klinuxMutexInit,
     klinuxMutexEnd,
     klinuxMutexAlloc,
@@ -77,6 +125,6 @@ sqlite3_mutex_methods const *sqlite3DefaultMutex(void){
     0,
   };
 
-  return &mutex_vtable;
+  return &sMutex;
 }
 #endif

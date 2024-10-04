@@ -47,7 +47,7 @@ int sqlite3FaultSim(int iTest){
 }
 #endif
 
-#if !defined(SQLITE_OMIT_FLOATING_POINT) && !defined(LINUX_KERNEL_BUILD)
+#if !defined(SQLITE_OMIT_FLOATING_POINT)
 /*
 ** Return true if the floating point value is Not a Number (NaN).
 **

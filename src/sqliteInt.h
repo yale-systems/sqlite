@@ -298,6 +298,7 @@
 #    define SQLITE_NOINLINE  __attribute__((noinline))
 #    define SQLITE_INLINE    __attribute__((always_inline)) inline
 #  endif
+#  define SQLITE_UNUSED __attribute__((unused))
 #elif defined(_MSC_VER) && _MSC_VER>=1310
 #  define SQLITE_NOINLINE  __declspec(noinline)
 #  define SQLITE_INLINE    __forceinline
@@ -634,14 +635,16 @@
 
 #ifdef FREEBSD_KERNEL
 #elif defined(LINUX_KERNEL_BUILD)
-#  include <linux/printk.h>
-#  ifdef NDEBUG
-#    define assert(condition) ((void)0)
-#  else
-#    define assert(condition)						\
+# include <linux/printk.h>
+# ifdef NDEBUG
+#   define assert(condition) ((void)0)
+# else
+#   define assert(condition)						\
     ((condition) ? (void)0 : pr_err("Assertion failed: %s, file %s, line %u, function %s\n", #condition, __FILE__, __LINE__, __func__))
 
-#  endif
+# endif
+# include <linux/minmax.h>
+# include <linux/string.h>
 #else
 #  include <stdio.h>
 #  include <stdlib.h>
@@ -5520,7 +5523,7 @@ int sqlite3VtabBegin(sqlite3 *, VTable *);
 
 FuncDef *sqlite3VtabOverloadFunction(sqlite3 *,FuncDef*, int nArg, Expr*);
 void sqlite3VtabUsesAllSchemas(Parse*);
-sqlite3_int64 sqlite3StmtCurrentTime(sqlite3_context*);
+SQLITE_UNUSED sqlite3_int64 sqlite3StmtCurrentTime(sqlite3_context*);
 int sqlite3VdbeParameterIndex(Vdbe*, const char*, int);
 int sqlite3TransferBindings(sqlite3_stmt *, sqlite3_stmt *);
 void sqlite3ParseObjectInit(Parse*,sqlite3*);

@@ -44,15 +44,13 @@
 **      Richmond, Virginia (USA)
 */
 #include "sqliteInt.h"
-#include <stdlib.h>
-#include <assert.h>
-
-#if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
-#  include <time.h>
-#endif
 
 
 #if !defined(SQLITE_OMIT_DATETIME_FUNCS)
+#include <time.h>
+#include <stdlib.h>
+#include <assert.h>
+
 
 /*
 ** The MSVC CRT on Windows CE may not have a localtime() function.

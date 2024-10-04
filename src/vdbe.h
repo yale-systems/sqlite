@@ -295,7 +295,7 @@ RecordCompare sqlite3VdbeFindCompare(UnpackedRecord*);
 void sqlite3VdbeLinkSubProgram(Vdbe *, SubProgram *);
 int sqlite3VdbeHasSubProgram(Vdbe*);
 
-int sqlite3NotPureFunc(sqlite3_context*);
+SQLITE_UNUSED int sqlite3NotPureFunc(sqlite3_context*);
 #ifdef SQLITE_ENABLE_BYTECODE_VTAB
 int sqlite3VdbeBytecodeVtabInit(sqlite3*);
 #endif
