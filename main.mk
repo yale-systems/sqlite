@@ -139,7 +139,6 @@ SRC = \
   $(TOP)/src/os_kfbsd.c \
   $(TOP)/src/os_kfbsd.h \
   $(TOP)/src/os_klinux.c \
-  $(TOP)/src/os_klinux.h \
   $(TOP)/src/os_kv.c \
   $(TOP)/src/os_unix.c \
   $(TOP)/src/os_win.c \
@@ -453,7 +452,6 @@ HDR = \
    $(TOP)/src/os.h \
    $(TOP)/src/os_common.h \
    $(TOP)/src/os_kfbsd.h \
-   $(TOP)/src/os_klinux.h \
    $(TOP)/src/os_setup.h \
    $(TOP)/src/os_win.h \
    $(TOP)/src/pager.h \

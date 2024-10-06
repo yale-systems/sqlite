@@ -2,7 +2,7 @@
 #ifdef LINUX_KERNEL_BUILD
 
 #include <linux/printk.h>
-#include "os_klinux.h"
+
 
 static sqlite3_vfs vfs = { 0 };
 

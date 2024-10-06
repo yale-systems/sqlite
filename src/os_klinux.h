@@ -1,4 +1,0 @@
-#ifndef OS_KLINUX_H_INCLUDED
-#define OS_KLINUX_H_INCLUDED
-
-#endif
