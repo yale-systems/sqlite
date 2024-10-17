@@ -45,6 +45,60 @@
 */
 #include "sqliteInt.h"
 
+#if defined(LINUX_KERNEL_BUILD)
+#include <linux/time64.h>
+#include <linux/ktime.h>
+#include <linux/timekeeping.h>
+#include <linux/time.h>
+
+size_t klinux_strftime(char *s, size_t max, const char *format, const struct tm *tm){
+  size_t len = 0;
+  const char *p = format;
+
+  while (*p && len < max - 1) {
+    if (*p == '%') {
+      p++;
+      switch (*p) {
+        case 'Y':
+          len += snprintf(s + len, max - len, "%04ld", tm->tm_year + 1900);
+          break;
+        case 'm':
+          len += snprintf(s + len, max - len, "%02d", tm->tm_mon + 1);
+          break;
+        case 'd':
+          len += snprintf(s + len, max - len, "%02d", tm->tm_mday);
+          break;
+        case 'H':
+          len += snprintf(s + len, max - len, "%02d", tm->tm_hour);
+          break;
+        case 'M':
+          len += snprintf(s + len, max - len, "%02d", tm->tm_min);
+          break;
+        case 'S':
+          len += snprintf(s + len, max - len, "%02d", tm->tm_sec);
+          break;
+        default:
+          if (len < max-1) {
+            s[len++] = '%';
+            if (len < max-1) {
+              s[len++] = *p; //format specifier in case we have space
+            }
+          }
+          break;
+      }
+    }
+    else {
+      s[len++] = *p;
+    }
+    p++;
+  }
+
+  s[len] = '\0';
+  return len;
+}
+
+
+#endif
 
 #if !defined(SQLITE_OMIT_DATETIME_FUNCS)
 #include <time.h>
@@ -1568,13 +1622,13 @@ static void ctimestampFunc(
 
 #ifdef FREEBSD_KERNEL
 
-//todo: STELIOS
+// TODO: Not implemented
 static void currentTimeFunc(
   sqlite3_context *context,
   int argc,
   sqlite3_value **argv
 ){
-  // time_t t;
+  //time_t t;
   //char *zFormat = (char *)sqlite3_user_data(context);
   // sqlite3_int64 iT;
   // struct tm *pTm;
@@ -1609,16 +1663,46 @@ static void currentTimeFunc(
 
 #elif defined(LINUX_KERNEL_BUILD)
 
-// TODO: implement the currentTimeFunc
 static void currentTimeFunc(
   sqlite3_context *context,
   int argc,
   sqlite3_value **argv
 ){
+  uint64_t t;
+  char *zFormat = (char *)sqlite3_user_data(context);
+  sqlite3_int64 iT;
+  struct tm *pTm;
+  struct tm sNow;
   char zBuf[20];
-  zBuf[0] = '0';
-  for (int i = 1; i < 20; i++) zBuf[i] = zBuf[i-1];
-  sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
+
+  UNUSED_PARAMETER(argc);
+  UNUSED_PARAMETER(argv);
+
+  struct timespec64 ts;
+  ktime_get_real_ts64(&ts);
+  iT = (sqlite3_int64)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+  
+  if( iT<=0 ) return;
+
+  //convert to seconds and then to tm, usable by strftime
+  t = iT/1000;
+  sqlite3_mutex_enter(sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MAIN));
+  time64_to_tm(t, 0, &sNow);
+  sqlite3_mutex_leave(sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MAIN));
+  
+#ifdef SQLITE_DEBUG
+  printk("sNow.tm_sec: %d\n", sNow.tm_sec);
+  printk("sNow.tm_min: %d\n", sNow.tm_min);
+  printk("sNow.tm_hour: %d\n", sNow.tm_hour);
+  printk("sNow.tm_mday: %d\n", sNow.tm_mday);
+  printk("sNow.tm_mon: %d\n", sNow.tm_mon);
+  printk("sNow.tm_year: %d\n", sNow.tm_year);
+#endif
+
+  if( sNow.tm_year > -1 ){
+    klinux_strftime(zBuf, 20, zFormat, &sNow);
+    sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
+  }
 }
 
 #else
