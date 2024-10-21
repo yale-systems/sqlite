@@ -1606,7 +1606,7 @@ struct WindowCodeArg {
   int regRowid;
 
   WindowCsrAndReg start;
-  WindowCsrAndReg current;
+  WindowCsrAndReg curr;
   WindowCsrAndReg end;
 };
 
@@ -2257,16 +2257,16 @@ static int windowCodeOp(
       if( op==WINDOW_AGGINVERSE ){
         if( pMWin->eStart==TK_FOLLOWING ){
           windowCodeRangeTest(
-              p, OP_Le, p->current.csr, regCountdown, p->start.csr, lblDone
+              p, OP_Le, p->curr.csr, regCountdown, p->start.csr, lblDone
           );
         }else{
           windowCodeRangeTest(
-              p, OP_Ge, p->start.csr, regCountdown, p->current.csr, lblDone
+              p, OP_Ge, p->start.csr, regCountdown, p->curr.csr, lblDone
           );
         }
       }else{
         windowCodeRangeTest(
-            p, OP_Gt, p->end.csr, regCountdown, p->current.csr, lblDone
+            p, OP_Gt, p->end.csr, regCountdown, p->curr.csr, lblDone
         );
       }
     }else{
@@ -2308,8 +2308,8 @@ static int windowCodeOp(
 
   switch( op ){
     case WINDOW_RETURN_ROW:
-      csr = p->current.csr;
-      reg = p->current.reg;
+      csr = p->curr.csr;
+      reg = p->curr.reg;
       windowReturnOneRow(p);
       break;
 
@@ -2825,10 +2825,10 @@ void sqlite3WindowCodeStep(
   s.pVdbe = v;
   s.regGosub = regGosub;
   s.addrGosub = addrGosub;
-  s.current.csr = pMWin->iEphCsr;
-  csrWrite = s.current.csr+1;
-  s.start.csr = s.current.csr+2;
-  s.end.csr = s.current.csr+3;
+  s.curr.csr = pMWin->iEphCsr;
+  csrWrite = s.curr.csr+1;
+  s.start.csr = s.curr.csr+2;
+  s.end.csr = s.curr.csr+3;
 
   /* Figure out when rows may be deleted from the ephemeral table. There
   ** are four options - they may never be deleted (eDelete==0), they may
@@ -2889,7 +2889,7 @@ void sqlite3WindowCodeStep(
     if( pMWin->pPartition ) regNewPeer += pMWin->pPartition->nExpr;
     regPeer = pParse->nMem+1;       pParse->nMem += nPeer;
     s.start.reg = pParse->nMem+1;   pParse->nMem += nPeer;
-    s.current.reg = pParse->nMem+1; pParse->nMem += nPeer;
+    s.curr.reg = pParse->nMem+1; pParse->nMem += nPeer;
     s.end.reg = pParse->nMem+1;     pParse->nMem += nPeer;
   }
 
@@ -2947,9 +2947,9 @@ void sqlite3WindowCodeStep(
     VdbeCoverageNeverNullIf(v, op==OP_Ge); /* NeverNull because bound <expr> */
     VdbeCoverageNeverNullIf(v, op==OP_Le); /*   values previously checked */
     windowAggFinal(&s, 0);
-    sqlite3VdbeAddOp1(v, OP_Rewind, s.current.csr);
+    sqlite3VdbeAddOp1(v, OP_Rewind, s.curr.csr);
     windowReturnOneRow(&s);
-    sqlite3VdbeAddOp1(v, OP_ResetSorter, s.current.csr);
+    sqlite3VdbeAddOp1(v, OP_ResetSorter, s.curr.csr);
     sqlite3VdbeAddOp2(v, OP_Goto, 0, lblWhereEnd);
     sqlite3VdbeJumpHere(v, addrGe);
   }
@@ -2961,12 +2961,12 @@ void sqlite3WindowCodeStep(
   if( pMWin->eStart!=TK_UNBOUNDED ){
     sqlite3VdbeAddOp1(v, OP_Rewind, s.start.csr);
   }
-  sqlite3VdbeAddOp1(v, OP_Rewind, s.current.csr);
+  sqlite3VdbeAddOp1(v, OP_Rewind, s.curr.csr);
   sqlite3VdbeAddOp1(v, OP_Rewind, s.end.csr);
   if( regPeer && pOrderBy ){
     sqlite3VdbeAddOp3(v, OP_Copy, regNewPeer, regPeer, pOrderBy->nExpr-1);
     sqlite3VdbeAddOp3(v, OP_Copy, regPeer, s.start.reg, pOrderBy->nExpr-1);
-    sqlite3VdbeAddOp3(v, OP_Copy, regPeer, s.current.reg, pOrderBy->nExpr-1);
+    sqlite3VdbeAddOp3(v, OP_Copy, regPeer, s.curr.reg, pOrderBy->nExpr-1);
     sqlite3VdbeAddOp3(v, OP_Copy, regPeer, s.end.reg, pOrderBy->nExpr-1);
   }
 
@@ -2984,7 +2984,7 @@ void sqlite3WindowCodeStep(
       if( pMWin->eFrmType==TK_RANGE ){
         int lbl = sqlite3VdbeMakeLabel(pParse);
         int addrNext = sqlite3VdbeCurrentAddr(v);
-        windowCodeRangeTest(&s, OP_Ge, s.current.csr, regEnd, s.end.csr, lbl);
+        windowCodeRangeTest(&s, OP_Ge, s.curr.csr, regEnd, s.end.csr, lbl);
         windowCodeOp(&s, WINDOW_AGGINVERSE, regStart, 0);
         windowCodeOp(&s, WINDOW_RETURN_ROW, 0, 0);
         sqlite3VdbeAddOp2(v, OP_Goto, 0, addrNext);
@@ -3010,7 +3010,7 @@ void sqlite3WindowCodeStep(
         addr = sqlite3VdbeCurrentAddr(v);
         if( regEnd ){
           lbl = sqlite3VdbeMakeLabel(pParse);
-          windowCodeRangeTest(&s, OP_Ge, s.current.csr, regEnd, s.end.csr, lbl);
+          windowCodeRangeTest(&s, OP_Ge, s.curr.csr, regEnd, s.end.csr, lbl);
         }
         windowCodeOp(&s, WINDOW_RETURN_ROW, 0, 0);
         windowCodeOp(&s, WINDOW_AGGINVERSE, regStart, 0);
@@ -3088,7 +3088,7 @@ void sqlite3WindowCodeStep(
   }
   sqlite3VdbeJumpHere(v, addrEmpty);
 
-  sqlite3VdbeAddOp1(v, OP_ResetSorter, s.current.csr);
+  sqlite3VdbeAddOp1(v, OP_ResetSorter, s.curr.csr);
   if( pMWin->pPartition ){
     if( pMWin->regStartRowid ){
       sqlite3VdbeAddOp2(v, OP_Integer, 1, pMWin->regStartRowid);

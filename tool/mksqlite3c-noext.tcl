@@ -303,6 +303,7 @@ foreach file {
    hash.c
    opcodes.c
 
+   os_klinux.c
    os_unix.c
    os_win.c
 

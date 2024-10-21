@@ -157,7 +157,7 @@ typedef struct VdbeOpList VdbeOpList;
 ** into an index into the Parse.aLabel[] array that contains the resolved
 ** address of that label.
 */
-#define ADDR(X)  (~(X))
+#define LABEL_INDEX(X)  (~(X))
 
 /*
 ** The makefile scans the vdbe.c source file and creates the "opcodes.h"
@@ -295,7 +295,7 @@ RecordCompare sqlite3VdbeFindCompare(UnpackedRecord*);
 void sqlite3VdbeLinkSubProgram(Vdbe *, SubProgram *);
 int sqlite3VdbeHasSubProgram(Vdbe*);
 
-int sqlite3NotPureFunc(sqlite3_context*);
+SQLITE_UNUSED int sqlite3NotPureFunc(sqlite3_context*);
 #ifdef SQLITE_ENABLE_BYTECODE_VTAB
 int sqlite3VdbeBytecodeVtabInit(sqlite3*);
 #endif

@@ -36,7 +36,12 @@
 /* Maximum pathname length.  Note: FILENAME_MAX defined by stdio.h
 */
 #ifndef SQLITE_MAX_PATHLEN
-# define SQLITE_MAX_PATHLEN FILENAME_MAX
+# if defined(LINUX_KERNEL_BUILD)
+#  include <linux/limits.h>
+#  define SQLITE_MAX_PATHLEN PATH_MAX
+# else
+#  define SQLITE_MAX_PATHLEN FILENAME_MAX
+# endif
 #endif
 
 /* Maximum number of symlinks that will be resolved while trying to

@@ -464,7 +464,7 @@ struct WhereInfo {
   SrcList *pTabList;        /* List of tables in the join */
   ExprList *pOrderBy;       /* The ORDER BY clause or NULL */
   ExprList *pResultSet;     /* Result set of the query */
-#if WHERETRACE_ENABLED
+#if defined(WHERETRACE_ENABLED)
   Expr *pWhere;             /* The complete WHERE clause */
 #endif
   Select *pSelect;          /* The entire SELECT statement containing WHERE */

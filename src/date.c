@@ -44,16 +44,13 @@
 **      Richmond, Virginia (USA)
 */
 #include "sqliteInt.h"
+
+
+#if !defined(SQLITE_OMIT_DATETIME_FUNCS)
+#include <time.h>
 #include <stdlib.h>
 #include <assert.h>
 
-#ifdef FREEBSD_KERNEL
-//STELIOS: todo
-#else
-#include <time.h>
-#endif
-
-#ifndef SQLITE_OMIT_DATETIME_FUNCS
 
 /*
 ** The MSVC CRT on Windows CE may not have a localtime() function.
@@ -1556,7 +1553,7 @@ static void ctimestampFunc(
 }
 #endif /* !defined(SQLITE_OMIT_DATETIME_FUNCS) */
 
-#ifdef SQLITE_OMIT_DATETIME_FUNCS
+#if defined(SQLITE_OMIT_DATETIME_FUNCS) || defined(LINUX_KERNEL_BUILD)
 /*
 ** If the library is compiled to omit the full-scale date and time
 ** handling (to get a smaller binary), the following minimal version
@@ -1610,7 +1607,22 @@ static void currentTimeFunc(
   sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
 }
 
-#else 
+#elif defined(LINUX_KERNEL_BUILD)
+
+// TODO: implement the currentTimeFunc
+static void currentTimeFunc(
+  sqlite3_context *context,
+  int argc,
+  sqlite3_value **argv
+){
+  char zBuf[20];
+  zBuf[0] = '0';
+  for (int i = 1; i < 20; i++) zBuf[i] = zBuf[i-1];
+  sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
+}
+
+#else
+
 static void currentTimeFunc(
   sqlite3_context *context,
   int argc,
@@ -1645,6 +1657,7 @@ static void currentTimeFunc(
 #endif //FREEBSD_KERNEL
 #endif
 
+
 /*
 ** This function registered all of the above C functions as SQL
 ** functions.  This should be the only routine in this file with
@@ -1652,7 +1665,7 @@ static void currentTimeFunc(
 */
 void sqlite3RegisterDateTimeFunctions(void){
   static FuncDef aDateTimeFuncs[] = {
-#ifndef SQLITE_OMIT_DATETIME_FUNCS
+#if !defined(SQLITE_OMIT_DATETIME_FUNCS) && !defined(LINUX_KERNEL_BUILD)
     PURE_DATE(julianday,        -1, 0, 0, juliandayFunc ),
     PURE_DATE(unixepoch,        -1, 0, 0, unixepochFunc ),
     PURE_DATE(date,             -1, 0, 0, dateFunc      ),

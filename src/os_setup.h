@@ -37,7 +37,12 @@
 */
 #if !defined(SQLITE_OS_KV) && !defined(SQLITE_OS_OTHER) && \
        !defined(SQLITE_OS_UNIX) && !defined(SQLITE_OS_WIN)
-#  if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || \
+#  if defined(LINUX_KERNEL_BUILD)
+#    define SLQITE_OS_OTHER 1
+#    define SQLITE_OS_WIN 0
+#    define SQLITE_OS_UNIX 0
+#    define SQLITE_OS_KV 0
+#  elif defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || \
           defined(__MINGW32__) || defined(__BORLANDC__)
 #    define SQLITE_OS_WIN 1
 #    define SQLITE_OS_UNIX 0
@@ -46,7 +51,7 @@
 #    define SQLITE_OS_UNIX 1
 #  endif
 #endif
-#if SQLITE_OS_OTHER+1>1
+#if defined(SQLITE_OS_OTHER) && SQLITE_OS_OTHER+1>1
 #  undef SQLITE_OS_KV
 #  define SQLITE_OS_KV 0
 #  undef SQLITE_OS_UNIX
@@ -54,7 +59,7 @@
 #  undef SQLITE_OS_WIN
 #  define SQLITE_OS_WIN 0
 #endif
-#if SQLITE_OS_KV+1>1
+#if defined(SQLITE_OS_OTHER) && SQLITE_OS_KV+1>1
 #  undef SQLITE_OS_OTHER
 #  define SQLITE_OS_OTHER 0
 #  undef SQLITE_OS_UNIX

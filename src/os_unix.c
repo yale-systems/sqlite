@@ -593,7 +593,6 @@ static struct unix_syscall {
 
 }; /* End of the overrideable system calls */
 
-
 /*
 ** On some systems, calls to fchown() will trigger a message in a security
 ** log if they come from non-root processes.  So avoid calling fchown() if
