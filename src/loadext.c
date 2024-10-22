@@ -554,20 +554,22 @@ static int sqlite3LoadExtension(
   char *zAltEntry = 0;
   void **aHandle;
   u64 nMsg = strlen(zFile);
-  int ii;
   int rc;
+
+#if SQLITE_OS_UNIX || SQLITE_OS_WIN
+  int ii;
 
   /* Shared library endings to try if zFile cannot be loaded as written */
   static const char *azEndings[] = {
-#if SQLITE_OS_WIN
+# if SQLITE_OS_WIN
      "dll"   
-#elif defined(__APPLE__)
+# elif defined(__APPLE__)
      "dylib"
-#else
+# else
      "so"
-#endif
+# endif
   };
-
+#endif
 
   if( pzErrMsg ) *pzErrMsg = 0;
 

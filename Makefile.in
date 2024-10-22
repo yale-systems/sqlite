@@ -184,8 +184,8 @@ LIBOBJS0 = alter.lo analyze.lo attach.lo auth.lo \
          icu.lo insert.lo json.lo legacy.lo loadext.lo \
          main.lo malloc.lo mem0.lo mem1.lo mem2.lo mem3.lo mem5.lo \
          memdb.lo memjournal.lo \
-         mutex.lo mutex_noop.lo mutex_fbsd.lo mutex_unix.lo mutex_w32.lo \
-         notify.lo opcodes.lo os.lo os_kv.lo os_unix.lo os_win.lo \
+         mutex.lo mutex_noop.lo mutex_fbsd.lo mutex_klinux.lo mutex_unix.lo mutex_w32.lo \
+         notify.lo opcodes.lo os.lo os_klinux.lo os_kv.lo os_unix.lo os_win.lo \
          pager.lo parse.lo pcache.lo pcache1.lo pragma.lo prepare.lo printf.lo \
          random.lo resolve.lo rowset.lo rtree.lo \
          sqlite3session.lo select.lo sqlite3rbu.lo status.lo stmt.lo \
@@ -252,6 +252,7 @@ SRC = \
   $(TOP)/src/mutex.h \
   $(TOP)/src/mutex_noop.c \
   $(TOP)/src/mutex_fbsd.c \
+  $(TOP)/src/mutex_klinux.c \
   $(TOP)/src/mutex_unix.c \
   $(TOP)/src/mutex_w32.c \
   $(TOP)/src/notify.c \
@@ -261,6 +262,7 @@ SRC = \
   $(TOP)/src/os_setup.h \
   $(TOP)/src/os_kfbsd.c \
   $(TOP)/src/os_kfbsd.h \
+  $(TOP)/src/os_klinux.c \
   $(TOP)/src/os_kv.c \
   $(TOP)/src/os_unix.c \
   $(TOP)/src/os_win.c \
@@ -481,6 +483,7 @@ TESTSRC2 = \
   $(TOP)/src/main.c \
   $(TOP)/src/mem5.c \
   $(TOP)/src/os.c \
+  $(TOP)/src/os_klinux.c \
   $(TOP)/src/os_kfbsd.c \
   $(TOP)/src/os_kv.c \
   $(TOP)/src/os_unix.c \
@@ -969,6 +972,9 @@ mutex_noop.lo:	$(TOP)/src/mutex_noop.c $(HDR)
 mutex_fbsd.lo:	$(TOP)/src/mutex_fbsd.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/mutex_fbsd.c
 
+mutex_klinux.lo: $(TOP)/src/mutex_klinux.c $(HDR)
+	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/mutex_klinux.c
+
 mutex_unix.lo:	$(TOP)/src/mutex_unix.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/mutex_unix.c
 
@@ -992,6 +998,9 @@ os.lo:	$(TOP)/src/os.c $(HDR)
 
 os_kfbsd.lo:	$(TOP)/src/os_kfbsd.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_kfbsd.c
+
+os_klinux.lo:	$(TOP)/src/os_klinux.c $(HDR)
+	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_klinux.c
 
 os_kv.lo:	$(TOP)/src/os_kv.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/os_kv.c

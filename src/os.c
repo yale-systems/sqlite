@@ -274,14 +274,16 @@ int sqlite3OsRandomness(sqlite3_vfs *pVfs, int nByte, char *zBufOut){
   if( sqlite3Config.iPrngSeed ){
     #ifdef FREEBSD_KERNEL
     printf("Warning: sqlite3OsRandomness - The function is not yet implemented for FreeBSD Kernel!");
-    //todo: STELIOS
+    #elif defined(LINUX_KERNEL_BUILD)
+    for (int i = 0; i < nByte; ++i) zBufOut[i] = 0;
     #else
     memset(zBufOut, 0, nByte);
     #endif
     if( ALWAYS(nByte>(signed)sizeof(unsigned)) ) nByte = sizeof(unsigned int);
     #ifdef FREEBSD_KERNEL
     printf("Warning: sqlite3OsRandomness - this part not yet implemented\n");
-    //todo: STELIOS
+    #elif defined(LINUX_KERNEL_BUILD)
+    for (int i = 0; i < nByte; ++i) zBufOut[i] = 0;
     #else
     memcpy(zBufOut, &sqlite3Config.iPrngSeed, nByte);
     #endif
@@ -387,6 +389,8 @@ sqlite3_vfs *sqlite3_vfs_find(const char *zVfs){
     #ifdef FREEBSD_KERNEL
     //todo: STELIOS
     printf("Warning: sqlite3_vfs_find - This code is not ready yet!\n");
+    #elif defined(LINUX_KERNEL_BUILD)
+    pr_warn("Warning: sqlite3_vfs_find - This code is not ready yet!\n");
     #else
     if( strcmp(zVfs, pVfs->zName)==0 ) break;
     #endif

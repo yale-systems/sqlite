@@ -895,8 +895,13 @@ static int exprProbability(Expr *p){
   assert( !ExprHasProperty(p, EP_IntValue) );
   sqlite3AtoF(p->u.zToken, &r, sqlite3Strlen30(p->u.zToken), SQLITE_UTF8);
   assert( r>=0.0 );
+#if defined(SQLITE_OMIT_FLOATING_POINT)
+  if( r> 1 ) return -1;
+  return (int)(r*134217728);
+#else
   if( r>1.0 ) return -1;
   return (int)(r*134217728.0);
+#endif
 }
 
 /*

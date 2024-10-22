@@ -1145,7 +1145,7 @@ void *sqlite3_get_auxdata(sqlite3_context *pCtx, int iArg){
   if( pCtx==0 ) return 0;
 #endif
   assert( sqlite3_mutex_held(pCtx->pOut->db->mutex) );
-#if SQLITE_ENABLE_STAT4
+#if defined(SQLITE_ENABLE_STAT4)
   if( pCtx->pVdbe==0 ) return 0;
 #else
   assert( pCtx->pVdbe!=0 );

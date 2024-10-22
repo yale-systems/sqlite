@@ -1374,7 +1374,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
   pLevel->notReady = notReady & ~sqlite3WhereGetMask(&pWInfo->sMaskSet, iCur);
   bRev = (pWInfo->revMask>>iLevel)&1;
   VdbeModuleComment((v, "Begin WHERE-loop%d: %s",iLevel,pTabItem->pTab->zName));
-#if WHERETRACE_ENABLED /* 0x4001 */
+#if defined(WHERETRACE_ENABLED) /* 0x4001 */
   if( sqlite3WhereTrace & 0x1 ){
     sqlite3DebugPrintf("Coding level %d of %d:  notReady=%llx  iFrom=%d\n",
        iLevel, pWInfo->nLevel, (u64)notReady, pLevel->iFrom);
@@ -2684,7 +2684,7 @@ Bitmask sqlite3WhereCodeOneLoopStart(
     }
   }
 
-#if WHERETRACE_ENABLED /* 0x4001 */
+#if defined(WHERETRACE_ENABLED) /* 0x4001 */
   if( sqlite3WhereTrace & 0x4000 ){
     sqlite3DebugPrintf("All WHERE-clause terms after coding level %d:\n",
                        iLevel);

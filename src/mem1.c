@@ -74,16 +74,20 @@ static malloc_zone_t* _sqliteZone_;
 ** Also used by Apple systems if SQLITE_WITHOUT_ZONEMALLOC is defined.
 */
 #ifdef FREEBSD_KERNEL
-#include <sys/malloc.h>
+#  include <sys/malloc.h>
 MALLOC_DEFINE(M_SQLITE, "sqlite malloc", "Buffers to foo data	into the ether");
-#define SQLITE_MALLOC(x)            malloc(x, M_SQLITE, M_WAITOK)
-#define SQLITE_FREE(x)              free(x, M_SQLITE)
-#define SQLITE_REALLOC(x,y)         realloc((x),(y), M_SQLITE, M_WAITOK)
+#  define SQLITE_MALLOC(x)            malloc(x, M_SQLITE, M_WAITOK)
+#  define SQLITE_FREE(x)              free(x, M_SQLITE)
+#  define SQLITE_REALLOC(x,y)         realloc((x),(y), M_SQLITE, M_WAITOK)
 MALLOC_DECLARE(M_SQLITE);
+#elif defined(LINUX_KERNEL_BUILD)
+#  define SQLITE_MALLOC(x)            kmalloc(x, GFP_KERNEL)
+#  define SQLITE_FREE(x)              kfree(x)
+#  define SQLITE_REALLOC(x,y)         krealloc((x),(y), GFP_KERNEL)
 #else
-#define SQLITE_MALLOC(x)             malloc(x)
-#define SQLITE_FREE(x)               free(x)
-#define SQLITE_REALLOC(x,y)          realloc((x),(y))
+#  define SQLITE_MALLOC(x)            malloc(x)
+#  define SQLITE_FREE(x)              free(x)
+#  define SQLITE_REALLOC(x,y)         realloc((x),(y))
 #endif
 
 /*
@@ -112,14 +116,18 @@ MALLOC_DECLARE(M_SQLITE);
 ** the macro SQLITE_MALLOCSIZE to the desired function name.
 */
 #if defined(SQLITE_USE_MALLOC_H)
-#  include <malloc.h>
-#  if defined(SQLITE_USE_MALLOC_USABLE_SIZE)
-#    if !defined(SQLITE_MALLOCSIZE)
-#      define SQLITE_MALLOCSIZE(x)   malloc_usable_size(x)
-#    endif
-#  elif defined(SQLITE_USE_MSIZE)
-#    if !defined(SQLITE_MALLOCSIZE)
-#      define SQLITE_MALLOCSIZE      _msize
+#  if defined(LINUX_KERNEL_BUILD)
+#    include <linux/slab.h>
+#  else
+#    include <malloc.h>
+#    if defined(SQLITE_USE_MALLOC_USABLE_SIZE)
+#      if !defined(SQLITE_MALLOCSIZE)
+#        define SQLITE_MALLOCSIZE(x)   malloc_usable_size(x)
+#      endif
+#    elif defined(SQLITE_USE_MSIZE)
+#      if !defined(SQLITE_MALLOCSIZE)
+#        define SQLITE_MALLOCSIZE      _msize
+#      endif
 #    endif
 #  endif
 #endif /* defined(SQLITE_USE_MALLOC_H) */

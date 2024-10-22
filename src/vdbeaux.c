@@ -637,7 +637,7 @@ static SQLITE_NOINLINE void resizeResolveLabel(Parse *p, Vdbe *v, int j){
 }
 void sqlite3VdbeResolveLabel(Vdbe *v, int x){
   Parse *p = v->pParse;
-  int j = ADDR(x);
+  int j = LABEL_INDEX(x);
   assert( v->eVdbeState==VDBE_INIT_STATE );
   assert( j<-p->nLabel );
   assert( j>=0 );
@@ -934,9 +934,9 @@ static void resolveP2Values(Vdbe *p, int *pMaxFuncArgs){
             ** non-jump opcodes less than SQLITE_MX_JUMP_CODE are guaranteed to
             ** have non-negative values for P2. */
             assert( (sqlite3OpcodeProperty[pOp->opcode] & OPFLG_JUMP)!=0 );
-            assert( ADDR(pOp->p2)<-pParse->nLabel );
+            assert( LABEL_INDEX(pOp->p2)<-pParse->nLabel );
             assert( aLabel!=0 );  /* True because of tag-20230419-1 */
-            pOp->p2 = aLabel[ADDR(pOp->p2)];
+            pOp->p2 = aLabel[LABEL_INDEX(pOp->p2)];
           }
           break;
         }
@@ -1007,7 +1007,7 @@ void sqlite3VdbeNoJumpsOutsideSubrtn(
         continue;
       }
       if( iDest<0 ){
-        int j = ADDR(iDest);
+        int j = LABEL_INDEX(iDest);
         assert( j>=0 );
         if( j>=-pParse->nLabel || pParse->aLabel[j]<0 ){
           continue;
@@ -4481,6 +4481,11 @@ static int SQLITE_NOINLINE doubleEq(double a, double b){ return a==b; }
 ** equal to, or greater than the second (double).
 */
 int sqlite3IntFloatCompare(i64 i, double r){
+#if defined(SQLITE_OMIT_FLOATING_POINT)
+  if (i < r) return -1;
+  else if (r == i) return 0;
+  else return 1;
+#else
   if( sqlite3IsNaN(r) ){
     /* SQLite considers NaN to be a NULL. And all integer values are greater
     ** than NULL */
@@ -4506,6 +4511,7 @@ int sqlite3IntFloatCompare(i64 i, double r){
     testcase( doubleEq(r,s) );
     return (s<r) ? -1 : (s>r);
   }
+#endif
 }
 
 /*

@@ -286,7 +286,7 @@ struct StatAccum {
   int nCol;                 /* Number of columns in index + pk/rowid */
   int nKeyCol;              /* Number of index columns w/o the pk/rowid */
   u8 nSkipAhead;            /* Number of times of skip-ahead */
-  StatSample current;       /* Current row as a StatSample */
+  StatSample curr;          /* Current row as a StatSample */
 #ifdef SQLITE_ENABLE_STAT4
   tRowcnt nPSample;         /* How often to do a periodic sample */
   int mxSample;             /* Maximum number of samples to accumulate */
@@ -369,7 +369,7 @@ static void statAccumDestructor(void *pOld){
     int i;
     for(i=0; i<p->nCol; i++) sampleClear(p->db, p->aBest+i);
     for(i=0; i<p->mxSample; i++) sampleClear(p->db, p->a+i);
-    sampleClear(p->db, &p->current);
+    sampleClear(p->db, &p->curr);
   }
 #endif
   sqlite3DbFree(p->db, p);
@@ -446,8 +446,8 @@ static void statInit(
   p->nCol = nCol;
   p->nKeyCol = nKeyCol;
   p->nSkipAhead = 0;
-  p->current.anDLt = (tRowcnt*)&p[1];
-  p->current.anEq = &p->current.anDLt[nColUp];
+  p->curr.anDLt = (tRowcnt*)&p[1];
+  p->curr.anEq = &p->curr.anDLt[nColUp];
 
 #ifdef SQLITE_ENABLE_STAT4
   p->mxSample = p->nLimit==0 ? mxSample : 0;
@@ -457,11 +457,11 @@ static void statInit(
 
     p->iGet = -1;
     p->nPSample = (tRowcnt)(p->nEst/(mxSample/3+1) + 1);
-    p->current.anLt = &p->current.anEq[nColUp];
+    p->curr.anLt = &p->curr.anEq[nColUp];
     p->iPrn = 0x689e962d*(u32)nCol ^ 0xd0944565*(u32)sqlite3_value_int(argv[2]);
   
     /* Set up the StatAccum.a[] and aBest[] arrays */
-    p->a = (struct StatSample*)&p->current.anLt[nColUp];
+    p->a = (struct StatSample*)&p->curr.anLt[nColUp];
     p->aBest = &p->a[mxSample];
     pSpace = (u8*)(&p->a[mxSample+nCol]);
     for(i=0; i<(mxSample+nCol); i++){
@@ -653,7 +653,7 @@ static void samplePushPrevious(StatAccum *p, int iChng){
   ** into IndexSample.a[] at this point.  */
   for(i=(p->nCol-2); i>=iChng; i--){
     StatSample *pBest = &p->aBest[i];
-    pBest->anEq[i] = p->current.anEq[i];
+    pBest->anEq[i] = p->curr.anEq[i];
     if( p->nSample<p->mxSample || sampleIsBetter(p, pBest, &p->a[p->iMin]) ){
       sampleInsert(p, pBest, i);
     }
@@ -671,7 +671,7 @@ static void samplePushPrevious(StatAccum *p, int iChng){
     for(i=p->nSample-1; i>=0; i--){
       int j;
       for(j=iChng; j<p->nCol; j++){
-        if( p->a[i].anEq[j]==0 ) p->a[i].anEq[j] = p->current.anEq[j];
+        if( p->a[i].anEq[j]==0 ) p->a[i].anEq[j] = p->curr.anEq[j];
       }
     }
     p->nMaxEqZero = iChng;
@@ -716,7 +716,7 @@ static void statPush(
 
   if( p->nRow==0 ){
     /* This is the first call to this function. Do initialization. */
-    for(i=0; i<p->nCol; i++) p->current.anEq[i] = 1;
+    for(i=0; i<p->nCol; i++) p->curr.anEq[i] = 1;
   }else{
     /* Second and subsequent calls get processed here */
 #ifdef SQLITE_ENABLE_STAT4
@@ -726,14 +726,14 @@ static void statPush(
     /* Update anDLt[], anLt[] and anEq[] to reflect the values that apply
     ** to the current row of the index. */
     for(i=0; i<iChng; i++){
-      p->current.anEq[i]++;
+      p->curr.anEq[i]++;
     }
     for(i=iChng; i<p->nCol; i++){
-      p->current.anDLt[i]++;
+      p->curr.anDLt[i]++;
 #ifdef SQLITE_ENABLE_STAT4
       if( p->mxSample ) p->current.anLt[i] += p->current.anEq[i];
 #endif
-      p->current.anEq[i] = 1;
+      p->curr.anEq[i] = 1;
     }
   }
 
@@ -769,7 +769,7 @@ static void statPush(
 #endif
   if( p->nLimit && p->nRow>(tRowcnt)p->nLimit*(p->nSkipAhead+1) ){
     p->nSkipAhead++;
-    sqlite3_result_int(context, p->current.anDLt[0]>0);
+    sqlite3_result_int(context, p->curr.anDLt[0]>0);
   }
 }
 
@@ -863,11 +863,11 @@ static void statGet(
     sqlite3_str_appendf(&sStat, "%llu", 
         p->nSkipAhead ? (u64)p->nEst : (u64)p->nRow);
     for(i=0; i<p->nKeyCol; i++){
-      u64 nDistinct = p->current.anDLt[i] + 1;
+      u64 nDistinct = p->curr.anDLt[i] + 1;
       u64 iVal = (p->nRow + nDistinct - 1) / nDistinct;
       if( iVal==2 && p->nRow*10 <= nDistinct*11 ) iVal = 1;
       sqlite3_str_appendf(&sStat, " %llu", iVal);
-      assert( p->current.anEq[i] );
+      assert( p->curr.anEq[i] );
     }
     sqlite3ResultStrAccum(context, &sStat);
   }
@@ -928,7 +928,7 @@ static const FuncDef statGetFuncdef = {
 static void callStatGet(Parse *pParse, int regStat, int iParam, int regOut){
 #ifdef SQLITE_ENABLE_STAT4
   sqlite3VdbeAddOp2(pParse->pVdbe, OP_Integer, iParam, regStat+1);
-#elif SQLITE_DEBUG
+#elif defined(SQLITE_DEBUG)
   assert( iParam==STAT_GET_STAT1 );
 #else
   UNUSED_PARAMETER( iParam );

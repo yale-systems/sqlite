@@ -4150,7 +4150,7 @@ static int exprCodeVector(Parse *pParse, Expr *p, int *piFreeable){
   }else{
     *piFreeable = 0;
     if( p->op==TK_SELECT ){
-#if SQLITE_OMIT_SUBQUERY
+#if defined(SQLITE_OMIT_SUBQUERY)
       iResult = 0;
 #else
       iResult = sqlite3CodeSubselect(pParse, p);
@@ -4639,7 +4639,7 @@ expr_code_doover:
     case TK_ISNOT:
       op = (op==TK_IS) ? TK_EQ : TK_NE;
       p5 = SQLITE_NULLEQ;
-      /* fall-through */
+      /* fall-through */ deliberate_fall_through
     case TK_LT:
     case TK_LE:
     case TK_GT:

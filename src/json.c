@@ -1054,9 +1054,11 @@ static int jsonParseAddNode(JsonParse*,u32,u32,const char*);
 ** A macro to hint to the compiler that a function should not be
 ** inlined.
 */
-#if defined(__GNUC__)
+#if defined(LINUX_KERNEL_BUILD)
+#  define JSON_NOINLINE noinline
+#elif defined(__GNUC__)
 #  define JSON_NOINLINE  __attribute__((noinline))
-#elif defined(_MSC_VER) && _MSC_VER>=1310
+#elif (defined(_MSC_VER) && _MSC_VER>=1310
 #  define JSON_NOINLINE  __declspec(noinline)
 #else
 #  define JSON_NOINLINE
@@ -1744,7 +1746,7 @@ json_parse_restart:
       jsonParseAddNode(pParse, JSON_NULL, 0, 0);
       return i+4;
     }
-    /* fall-through into the default case that checks for NaN */
+    /* fall-through into the default case that checks for NaN */ deliberate_fall_through
   }
   default: {
     u32 k;
@@ -2310,7 +2312,7 @@ static void jsonRemoveAllNulls(JsonNode *pNode){
 ** SQL functions used for testing and debugging
 ****************************************************************************/
 
-#if SQLITE_DEBUG
+#if defined(SQLITE_DEBUG)
 /*
 ** Print N node entries.
 */
@@ -3831,7 +3833,7 @@ void sqlite3RegisterJsonFunctions(void){
     JFUNCTION(json_type,          1, 1, 0, 0,          jsonTypeFunc),
     JFUNCTION(json_type,          2, 1, 0, 0,          jsonTypeFunc),
     JFUNCTION(json_valid,         1, 1, 0, 0,          jsonValidFunc),
-#if SQLITE_DEBUG
+#if defined(SQLITE_DEBUG)
     JFUNCTION(json_parse,         1, 1, 0, 0,          jsonParseFunc),
     JFUNCTION(json_test1,         1, 1, 0, 0,          jsonTest1Func),
 #endif

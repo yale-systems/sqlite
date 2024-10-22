@@ -109,7 +109,9 @@
 ** when compiling with clang.
 */
 #if defined(__GNUC__) && !defined(SQLITE_DISABLE_INTRINSIC)
+#ifndef GCC_VERSION
 # define GCC_VERSION (__GNUC__*1000000+__GNUC_MINOR__*1000+__GNUC_PATCHLEVEL__)
+#endif
 #else
 # define GCC_VERSION 0
 #endif
@@ -145,8 +147,8 @@
 */
 #if GCC_VERSION>=7000000
 # define deliberate_fall_through __attribute__((fallthrough));
-#else
-# define deliberate_fall_through
+#elif defined(LINUX_KERNEL_BUILD)
+# define deliberate_fall_through fallthrough;
 #endif
 
 /*
@@ -243,11 +245,15 @@
 /*
 ** Include standard header files as necessary
 */
+#if defined(LINUX_KERNEL_BUILD) && (defined(HAVE_STDINT_H) || defined(HAVE_INTTYPES_H))
+#include <linux/types.h>
+#else
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #endif
 
 /*
@@ -266,7 +272,7 @@
 ** So we have to define the macros in different ways depending on the
 ** compiler.
 */
-#if defined(HAVE_STDINT_H)   /* Use this case if we have ANSI headers */
+#if (defined(HAVE_STDINT_H) && !defined(LINUX_KERNEL_BUILD))   /* Use this case if we have ANSI headers */
 # define SQLITE_INT_TO_PTR(X)  ((void*)(intptr_t)(X))
 # define SQLITE_PTR_TO_INT(X)  ((int)(intptr_t)(X))
 #elif defined(__PTRDIFF_TYPE__)  /* This case should work for GCC */
@@ -285,8 +291,14 @@
 ** inlined.
 */
 #if defined(__GNUC__)
-#  define SQLITE_NOINLINE  __attribute__((noinline))
-#  define SQLITE_INLINE    __attribute__((always_inline)) inline
+#  if defined(LINUX_KERNEL_BUILD)
+#    define SQLITE_NOINLINE  noinline
+#    define SQLITE_INLINE    __attribute__((always_inline)) inline
+#  else
+#    define SQLITE_NOINLINE  __attribute__((noinline))
+#    define SQLITE_INLINE    __attribute__((always_inline)) inline
+#  endif
+#  define SQLITE_UNUSED __attribute__((unused))
 #elif defined(_MSC_VER) && _MSC_VER>=1310
 #  define SQLITE_NOINLINE  __declspec(noinline)
 #  define SQLITE_INLINE    __forceinline
@@ -610,20 +622,35 @@
 ** in theory, be used by the compiler to generate better code, but
 ** currently they are just comments for human readers.
 */
-#define likely(X)    (X)
-#define unlikely(X)  (X)
+#if !defined(likely)
+#  define likely(X)    (X)
+#endif
+#if !defined(unlikely)
+#  define unlikely(X)  (X)
+#endif
+
 
 #include "hash.h"
 #include "parse.h"
 
 #ifdef FREEBSD_KERNEL
-//STELIOS: todo
+#elif defined(LINUX_KERNEL_BUILD)
+# include <linux/printk.h>
+# ifdef NDEBUG
+#   define assert(condition) ((void)0)
+# else
+#   define assert(condition)						\
+    ((condition) ? (void)0 : pr_err("Assertion failed: %s, file %s, line %u, function %s\n", #condition, __FILE__, __LINE__, __func__))
+
+# endif
+# include <linux/minmax.h>
+# include <linux/string.h>
 #else
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <stddef.h>
+#  include <stdio.h>
+#  include <stdlib.h>
+#  include <string.h>
+#  include <assert.h>
+#  include <stddef.h>
 #endif
 
 /*
@@ -642,6 +669,10 @@
 ** If compiling for a processor that lacks floating point support,
 ** substitute integer for floating-point
 */
+#if defined(LINUX_KERNEL_BUILD) && !defined(SQLITE_OMIT_FLOATING_POINT)
+# define SQLITE_OMIT_FLOATING_POINT
+#endif
+
 #ifdef SQLITE_OMIT_FLOATING_POINT
 # define double sqlite_int64
 # define float sqlite_int64
@@ -4659,7 +4690,6 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys3(void);
 #ifndef SQLITE_MUTEX_OMIT
   sqlite3_mutex_methods const *sqlite3DefaultMutex(void);
   sqlite3_mutex_methods const *sqlite3NoopMutex(void);
-  sqlite3_mutex_methods const *sqlite3FbsdMutex(void);
   sqlite3_mutex *sqlite3MutexAlloc(int);
   int sqlite3MutexInit(void);
   int sqlite3MutexEnd(void);
@@ -4856,7 +4886,7 @@ i16 sqlite3TableColumnToIndex(Index*, i16);
   i16 sqlite3StorageColumnToTable(Table*, i16);
 #endif
 void sqlite3StartTable(Parse*,Token*,Token*,int,int,int,int);
-#if SQLITE_ENABLE_HIDDEN_COLUMNS
+#if defined(SQLITE_ENABLE_HIDDEN_COLUMNS)
   void sqlite3ColumnPropertiesFromName(Table*, Column*);
 #else
 # define sqlite3ColumnPropertiesFromName(T,C) /* no-op */
@@ -5497,7 +5527,7 @@ int sqlite3VtabBegin(sqlite3 *, VTable *);
 
 FuncDef *sqlite3VtabOverloadFunction(sqlite3 *,FuncDef*, int nArg, Expr*);
 void sqlite3VtabUsesAllSchemas(Parse*);
-sqlite3_int64 sqlite3StmtCurrentTime(sqlite3_context*);
+SQLITE_UNUSED sqlite3_int64 sqlite3StmtCurrentTime(sqlite3_context*);
 int sqlite3VdbeParameterIndex(Vdbe*, const char*, int);
 int sqlite3TransferBindings(sqlite3_stmt *, sqlite3_stmt *);
 void sqlite3ParseObjectInit(Parse*,sqlite3*);
