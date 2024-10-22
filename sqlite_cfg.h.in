@@ -135,9 +135,6 @@
 /* Use kernel mutexes */
 #undef SQLITE_MUTEX_FBSD
 
-/* FreeBSD Kernel uses no datetime functions */
-#undef SQLITE_OMIT_DATETIME_FUNCS
-
 /* Solves issues with initialization of SQLite */
 #undef SQLITE_OMIT_DESERIALIZE
 

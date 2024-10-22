@@ -9,18 +9,63 @@
 #include "os_kfbsd.h"
 
 /*
+ * Define the various helper functions needed for FreeBSD.
+ */
+
+static int kern_vfs_open(sqlite3_vfs *vfs, sqlite3_filename zName, sqlite3_file *file, int flags, int *pOutFlags);
+static int kern_vfs_delete(sqlite3_vfs *vfs, const char *zName, int syncDir);
+static int kern_vfs_access(sqlite3_vfs *vfs, const char *zName, int flags, int *pResOut);
+static int kern_vfs_full_pathname(sqlite3_vfs *vfs, const char *zName, int nOut, char *zOut);
+static void *kern_vfs_dl_open(sqlite3_vfs *vfs, const char *zFilename);
+static void kern_vfs_dl_error(sqlite3_vfs *vfs, int nByte, char *zErrMsg);
+static void (*kern_vfs_dl_sym(sqlite3_vfs *vfs, void* p, const char *zSymbol))(void);
+static void kern_vfs_dl_close(sqlite3_vfs *vfs, void* p);
+static int kern_vfs_randomness(sqlite3_vfs *vfs, int nByte, char *zOut);
+static int kern_vfs_sleep(sqlite3_vfs *vfs, int microseconds);
+static int kern_vfs_current_time(sqlite3_vfs *vfs, double *pTime);
+static int kern_vfs_current_time_int64(sqlite3_vfs *vfs, sqlite3_int64 *piNow);
+static int kern_vfs_get_last_error(sqlite3_vfs *vfs, int nBuf, char *zBuf);
+
+static sqlite3_vfs kern_vfs = {
+		3,                          // iVersion
+		sizeof(sqlite3_file),       // szOsFile
+		SQLITE_MAX_PATHLEN,         // mxPathname
+		NULL,                       // pNext
+		"kern_vfs",                 // zName
+		NULL,                       // pAppData
+		kern_vfs_open,              // xOpen
+		kern_vfs_delete,            // xDelete
+		kern_vfs_access,            // xAccess
+		kern_vfs_full_pathname,     // xFullPathname
+		kern_vfs_dl_open,           // xDlOpen
+		kern_vfs_dl_error,          // xDlError
+		kern_vfs_dl_sym,            // xDlSym
+		kern_vfs_dl_close,          // xDlClose
+		kern_vfs_randomness,        // xRandomness
+		kern_vfs_sleep,            // xSleep
+		kern_vfs_current_time,      // xCurrentTime
+		kern_vfs_get_last_error,     // xGetLastError
+		kern_vfs_current_time_int64,      // xCurrentTimeInt64
+		NULL,      /* xSetSystemCall */
+		NULL,      /* xGetSystemCall */
+		NULL,     /* xNextSystemCall */
+	};
+
+/*
 ** Initialize the operating system interface.
 */
 int sqlite3_os_init(void){
-  /* TODO: Implement FreeBSD-specific initialization here. */
+  sqlite3_vfs_register(&kern_vfs, 1);
+  assert( sqlite3_vfs_find("kern_vfs")==&kern_vfs );
   return SQLITE_OK;
+
 }
 
 /*
 ** Deinitialize the operating system interface.
 */
 int sqlite3_os_end(void){
-  /* TODO: Implement FreeBSD-specific deinitialization here. */
+  /* XXX - gnn@ NOTHING TO DO HERE AS YET */
   return SQLITE_OK;
 }
 
@@ -144,9 +189,19 @@ static int kern_vfs_sleep(sqlite3_vfs *vfs, int microseconds) {
 }
 
 static int kern_vfs_current_time(sqlite3_vfs *vfs, double *pTime) {
+    static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
     struct timespec ts;
     getnanotime(&ts);
-    *pTime = ts.tv_sec;
+    *pTime = unixEpoch + 1000 * (sqlite3_int64)ts.tv_sec + ts.tv_nsec / 1000000;
+    // *pTime = ts.tv_sec + ts.tv_nsec * 1e-9;  // to seconds
+    return SQLITE_OK;
+}
+
+static int kern_vfs_current_time_int64(sqlite3_vfs *vfs, sqlite3_int64 *piNow) {
+    static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
+    struct timespec ts;
+    getnanotime(&ts);
+    *piNow = unixEpoch + 1000 * (sqlite3_int64)ts.tv_sec + ts.tv_nsec / 1000000;
     // *pTime = ts.tv_sec + ts.tv_nsec * 1e-9;  // to seconds
     return SQLITE_OK;
 }
@@ -161,26 +216,5 @@ static int kern_vfs_get_last_error(sqlite3_vfs *vfs, int nBuf, char *zBuf) {
     snprintf(zBuf, nBuf, "Kernel error: %d", error);
     return SQLITE_OK;
 }
-
-sqlite3_vfs kern_vfs = {
-		1,                          // iVersion
-		sizeof(sqlite3_file),       // szOsFile
-		SQLITE_MAX_PATHLEN,         // mxPathname
-		NULL,                       // pNext
-		"kern_vfs",                 // zName
-		NULL,                       // pAppData
-		kern_vfs_open,              // xOpen
-		kern_vfs_delete,            // xDelete
-		kern_vfs_access,            // xAccess
-		kern_vfs_full_pathname,     // xFullPathname
-		kern_vfs_dl_open,           // xDlOpen
-		kern_vfs_dl_error,          // xDlError
-		kern_vfs_dl_sym,            // xDlSym
-		kern_vfs_dl_close,          // xDlClose
-		kern_vfs_randomness,        // xRandomness
-		kern_vfs_sleep,            // xSleep
-		kern_vfs_current_time,      // xCurrentTime
-		kern_vfs_get_last_error     // xGetLastError
-	};
 
 #endif
