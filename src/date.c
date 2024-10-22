@@ -1566,7 +1566,7 @@ static void ctimestampFunc(
 ** as the user-data for the function.
 */
 
-#ifdefined(LINUX_KERNEL_BUILD)
+#if defined(LINUX_KERNEL_BUILD)
 
 // TODO: implement the currentTimeFunc
 static void currentTimeFunc(
