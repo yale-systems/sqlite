@@ -13193,7 +13193,7 @@ printf "%s\n" "#define FREEBSD_KERNEL 1" >>confdefs.h
 printf "%s\n" "#define assert(X) //STELIOS: todo" >>confdefs.h
 
 
-printf "%s\n" "#define SQLITE_OMIT_DATETIME_FUNCS 1" >>confdefs.h
+printf "%s\n" "#define SQLITE_OMIT_LOCALTIME 1" >>confdefs.h
 
 
 printf "%s\n" "#define SQLITE_OMIT_FLOATING_POINT 1" >>confdefs.h

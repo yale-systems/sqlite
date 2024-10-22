@@ -682,7 +682,11 @@
 # ifndef SQLITE_BIG_DBL
 #   define SQLITE_BIG_DBL (((sqlite3_int64)1)<<50)
 # endif
+#ifndef FREEBSD_KERNEL
 # define SQLITE_OMIT_DATETIME_FUNCS 1
+#else
+ #define SQLITE_OMIT_LOCALTIME
+#endif /* FREEBSD_KERNEL */
 # define SQLITE_OMIT_TRACE 1
 # undef SQLITE_MIXED_ENDIAN_64BIT_FLOAT
 # undef SQLITE_HAVE_ISNAN
