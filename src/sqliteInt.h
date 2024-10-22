@@ -149,6 +149,8 @@
 # define deliberate_fall_through __attribute__((fallthrough));
 #elif defined(LINUX_KERNEL_BUILD)
 # define deliberate_fall_through fallthrough;
+#else
+# define deliberate_fall_through
 #endif
 
 /*
