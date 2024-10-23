@@ -45,11 +45,14 @@
 */
 #include "sqliteInt.h"
 
-
+// XXX: remove SQLITE_OMIT_DATETIME_FUNCS after the linux time functions
+// will be implemented
 #if !defined(SQLITE_OMIT_DATETIME_FUNCS)
-#include <time.h>
-#include <stdlib.h>
-#include <assert.h>
+# if !defined(FREEBSD_KERNEL)
+#  include <time.h>
+#  include <assert.h>
+# endif
+
 
 
 /*
@@ -1613,6 +1616,7 @@ static void currentTimeFunc(
     sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
   }
 }
+#endif
 #endif
 
 
