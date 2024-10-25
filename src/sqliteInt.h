@@ -678,11 +678,11 @@
 # ifndef SQLITE_BIG_DBL
 #   define SQLITE_BIG_DBL (((sqlite3_int64)1)<<50)
 # endif
-#if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
-# define SQLITE_OMIT_DATETIME_FUNCS 1
-#else
- #define SQLITE_OMIT_LOCALTIME
-#endif /* FREEBSD_KERNEL */
+# if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
+#  define SQLITE_OMIT_DATETIME_FUNCS 1
+# else
+#  define SQLITE_OMIT_LOCALTIME
+# endif /* FREEBSD_KERNEL */
 # define SQLITE_OMIT_TRACE 1
 # undef SQLITE_MIXED_ENDIAN_64BIT_FLOAT
 # undef SQLITE_HAVE_ISNAN
@@ -690,6 +690,21 @@
 #ifndef SQLITE_BIG_DBL
 # define SQLITE_BIG_DBL (1e99)
 #endif
+
+/*
+** If compiling for the kernel introducing macros to wrap
+** floating point operations.
+*/
+#if !defined(SQLITE_OMIT_FLOATING_POINT) && defined(LINUX_KERNEL_BUILD)
+# include <linux/asm/fpu.h>
+# define ENTER_FPU_OPERATIO kernel_fpu_begin();
+# define EXIT_FPU_OPERATION kernel_fpu_end();
+#else
+# define ENTER_FPU_OPERATION
+# define EXIT_FPU_OPERATION
+#endif
+
+    
 
 /*
 ** OMIT_TEMPDB is set to 1 if SQLITE_OMIT_TEMPDB is defined, or 0

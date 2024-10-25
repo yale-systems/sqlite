@@ -407,7 +407,6 @@ u8 sqlite3StrIHash(const char *z){
   return h;
 }
 
-#if !defined(SQLITE_OMIT_FLOATING_POINT)
 /* Double-Double multiplication.  (x[0],x[1]) *= (y,yy)
 **
 ** Reference:
@@ -443,7 +442,6 @@ static void dekkerMul2(volatile double *x, double y, double yy){
   x[1] = c - x[0];
   x[1] += cc;
 }
-#endif
 
 /*
 ** The string z[] is an text representation of a real number.
@@ -974,32 +972,6 @@ int sqlite3Atoi(const char *z){
 ** The p->z[] array is *not* zero-terminated.
 */
 void sqlite3FpDecode(FpDecode *p, double r, int iRound, int mxRound){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-  p->isSpecial = 0;
-  p->z = p->zBuf;
-  p->n = 1;
-
-  if (r < 0) {
-    p->sign = '-';
-    r = -r;
-  } else if (r == 0) {
-    p->zBuf[0] = '0';
-    p->iDP = p->n;
-    return;
-  } else {
-    p->sign = '-';
-  }
-
-  sqlite_int64 decimals = 0;
-  for (sqlite_int64 s = r; s != 0; s /= 10, ++p->n, decimals *= 10)
-    ;
-  decimals /= 10;
-  p->iDP = p->n;
-  for (char *s = p->zBuf; decimals != 0; decimals /= 10) {
-     *s++ = '0' + r / decimals;
-     r %= decimals;
-  }
-#else
   int i;
   u64 v;
   int e, exp = 0;
@@ -1130,7 +1102,6 @@ void sqlite3FpDecode(FpDecode *p, double r, int iRound, int mxRound){
   p->z = &p->zBuf[i+1];
   assert( i+p->n < sizeof(p->zBuf) );
   while( ALWAYS(p->n>0) && p->z[p->n-1]=='0' ){ p->n--; }
-#endif
 }
 
 /*
