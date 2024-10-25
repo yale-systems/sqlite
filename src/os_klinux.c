@@ -36,21 +36,21 @@ static sqlite3_vfs kern_vfs = {
 };
 
 static int kern_vfs_current_time(sqlite3_vfs *vfs, double *pTime) {
-    static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
-    struct timespec64 ts;
-    ktime_get_real_ts64(&ts);
-    *pTime = unixEpoch + 1000 * (sqlite3_int64)ts.tv_sec + ts.tv_nsec / 1000000;
-    // *pTime = ts.tv_sec + ts.tv_nsec * 1e-9;  // to seconds
-    return SQLITE_OK;
+  static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
+  struct timespec64 ts;
+  ktime_get_real_ts64(&ts);
+  *pTime = unixEpoch + 1000 * (sqlite3_int64)ts.tv_sec + ts.tv_nsec / 1000000;
+  // *pTime = ts.tv_sec + ts.tv_nsec * 1e-9;  // to seconds
+  return SQLITE_OK;
 }
 
 static int kern_vfs_current_time_int64(sqlite3_vfs *vfs, sqlite3_int64 *piNow) {
-    static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
-    struct timespec64 ts;
-    ktime_get_real_ts64(&ts);
-    *piNow = unixEpoch + 1000 * (sqlite3_int64)ts.tv_sec + ts.tv_nsec / 1000000;
-    // *pTime = ts.tv_sec + ts.tv_nsec * 1e-9;  // to seconds
-    return SQLITE_OK;
+  static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
+  struct timespec64 ts;
+  ktime_get_real_ts64(&ts);
+  *piNow = unixEpoch + 1000 * (sqlite3_int64)ts.tv_sec + ts.tv_nsec / 1000000;
+  // *pTime = ts.tv_sec + ts.tv_nsec * 1e-9;  // to seconds
+  return SQLITE_OK;
 }
 
 /*
