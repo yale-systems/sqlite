@@ -45,9 +45,8 @@
 */
 #include "sqliteInt.h"
 
-// XXX: remove SQLITE_OMIT_DATETIME_FUNCS after the linux time functions
-// will be implemented
 #if !defined(SQLITE_OMIT_DATETIME_FUNCS)
+
 # if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
 #  include <time.h>
 #  include <assert.h>
@@ -220,13 +219,8 @@ static int parseHhMmSs(const char *zDate, DateTime *p){
       double rScale = 1.0;
       zDate++;
       while( sqlite3Isdigit(*zDate) ){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-        ms = ms*10 + *zDate - '0';
-        rScale *= 10;
-#else
         ms = ms*10.0 + *zDate - '0';
         rScale *= 10.0;
-#endif
         zDate++;
       }
       ms /= rScale;
@@ -284,19 +278,10 @@ static void computeJD(DateTime *p){
   B = 2 - A + (A/4);
   X1 = 36525*(Y+4716)/100;
   X2 = 306001*(M+1)/10000;
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-  p->iJD = (sqlite3_int64)((2 * (X1 + X2 + D + B) - 3049) * 43200000);
-#else
   p->iJD = (sqlite3_int64)((X1 + X2 + D + B - 1524.5 ) * 86400000);
-#endif
   p->validJD = 1;
   if( p->validHMS ){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-    //half a millisecond should not be an issue
-    p->iJD += p->h*3600000 + p->m*60000 + (sqlite3_int64)(p->s*1000);
-#else
     p->iJD += p->h*3600000 + p->m*60000 + (sqlite3_int64)(p->s*1000 + 0.5);
-#endif
     if( p->validTZ ){
       p->iJD -= p->tz*60000;
       p->validYMD = 0;
@@ -374,17 +359,10 @@ static int setDateTimeToCurrent(sqlite3_context *context, DateTime *p){
 static void setRawDateNumber(DateTime *p, double r){
   p->s = r;
   p->rawS = 1;
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-  if(r >= 0 && r <= 5373484) {
-    p->iJD = (sqlite3_int64)(r*86400000);
-    p->validJD = 1;
-  }
-#else
   if( r>=0.0 && r<5373484.5 ){
     p->iJD = (sqlite3_int64)(r*86400000.0 + 0.5);
     p->validJD = 1;
   }
-#endif
 }
 
 /*
@@ -448,37 +426,6 @@ static int validJulianDay(sqlite3_int64 iJD){
 /*
 ** Compute the Year, Month, and Day from the julian day number.
 */
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-// this is a rewrite of the code below only using integers, did not replace the original one for consistency
-static void computeYMD(DateTime *p) {
-  int Z, A, B, C, D, E, X1;
-  if (p->validYMD) return;
-  if (!p->validJD) {
-    p->Y = 2000;
-    p->M = 1;
-    p->D = 1;
-  } 
-  else if (!validJulianDay(p->iJD)) {
-    datetimeError(p);
-    return;
-  }
-  else {
-    Z = (int)((p->iJD + 43200000) / 86400000);
-    A = ((4 * Z - 7468865)/146097);
-    A = Z + 1 + A - (A / 4);
-    B = A + 1524;
-    C = ((20 * B - 2442)/7305);
-    D = (36525*(C&32767))/100;
-    E = (10000*(B - D))/306001;
-    X1 = ((306001 * E)/10000);
-    p->D = B - D - X1;
-    p->M = E < 14 ? E - 1 : E - 13;
-    p->Y = p->M > 2 ? C - 4716 : C - 4715;
-  }
-  p->validYMD = 1;
-}
-
-#else
 static void computeYMD(DateTime *p){
   int Z, A, B, C, D, E, X1;
   if( p->validYMD ) return;
@@ -505,9 +452,6 @@ static void computeYMD(DateTime *p){
   p->validYMD = 1;
 }
 
-#endif
-
-
 
 /*
 ** Compute the Hour, Minute, and Seconds from the julian day number.
@@ -517,11 +461,7 @@ static void computeHMS(DateTime *p){
   if( p->validHMS ) return;
   computeJD(p);
   day_ms = (int)((p->iJD + 43200000) % 86400000);
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-  p->s = (day_ms % 60000)/1000;
-#else
   p->s = (day_ms % 60000)/1000.0;
-#endif
   day_min = day_ms/60000;
   p->m = day_min % 60;
   p->h = day_min / 60;
@@ -714,14 +654,9 @@ static void autoAdjustDate(DateTime *p){
   }else if( p->s>=-21086676*(i64)10000        /* -4713-11-24 12:00:00 */
          && p->s<=(25340230*(i64)10000)+799   /*  9999-12-31 23:59:59 */
   ){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-    clearYMD_HMS_TZ(p);
-    p->iJD = (sqlite3_int64)(p->s*1000 + 210866760000000);
-#else
     double r = p->s*1000.0 + 210866760000000.0;
     clearYMD_HMS_TZ(p);
     p->iJD = (sqlite3_int64)(r + 0.5);
-#endif
     p->validJD = 1;
     p->rawS = 0;
   }
@@ -815,20 +750,11 @@ static int parseModifier(
       */
       if( sqlite3_stricmp(z, "unixepoch")==0 && p->rawS ){
         if( idx>1 ) return 1;  /* IMP: R-49255-55373 */
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-        r = p->s*1000 + 210866760000000;
-        if( r>=0 && r<464269060800000 )
-#else
         r = p->s*1000.0 + 210866760000000.0;
         if( r>=0.0 && r<464269060800000.0 )
-#endif
         {
           clearYMD_HMS_TZ(p);
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-          p->iJD = (sqlite3_int64)((int)(r));
-#else
           p->iJD = (sqlite3_int64)(r + 0.5);
-#endif
           p->validJD = 1;
           p->rawS = 0;
           rc = 0;
@@ -874,15 +800,9 @@ static int parseModifier(
       ** weekday N where 0==Sunday, 1==Monday, and so forth.  If the
       ** date is already on the appropriate weekday, this is a no-op.
       */
-#ifdef SQLITE_OMIT_FLOATING_POINT
-      if( sqlite3_strnicmp(z, "weekday ", 8)==0
-               && sqlite3AtoF(&z[8], &r, sqlite3Strlen30(&z[8]), SQLITE_UTF8)>0
-               && r>=0 && r<7 && (n=(int)r)==r )
-#else
       if( sqlite3_strnicmp(z, "weekday ", 8)==0
                && sqlite3AtoF(&z[8], &r, sqlite3Strlen30(&z[8]), SQLITE_UTF8)>0
                && r>=0.0 && r<7.0 && (n=(int)r)==r )
-#endif
         {
         sqlite3_int64 Z;
         computeYMD_HMS(p);
@@ -1076,11 +996,7 @@ static int parseModifier(
             }
           }
           computeJD(p);
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-          p->iJD += (sqlite3_int64)(r*1000*aXformType[i].rXform + rRounder);
-#else
           p->iJD += (sqlite3_int64)(r*1000.0*aXformType[i].rXform + rRounder);
-#endif
           rc = 0;
           break;
         }
@@ -1162,11 +1078,7 @@ static void juliandayFunc(
   DateTime x;
   if( isDate(context, argc, argv, &x)==0 ){
     computeJD(&x);
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-    sqlite3_result_double(context, x.iJD/86400000);
-#else
     sqlite3_result_double(context, x.iJD/86400000.0);
-#endif
   }
 }
 
@@ -1185,11 +1097,7 @@ static void unixepochFunc(
   if( isDate(context, argc, argv, &x)==0 ){
     computeJD(&x);
     if( x.useSubsec ){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-      sqlite3_result_double(context, (x.iJD - 21086676*(i64)10000000)/1000);
-#else
       sqlite3_result_double(context, (x.iJD - 21086676*(i64)10000000)/1000.0);
-#endif
     }else{
       sqlite3_result_int64(context, x.iJD/1000 - 21086676*(i64)10000);
     }
@@ -1231,11 +1139,7 @@ static void datetimeFunc(
     zBuf[16] = '0' + (x.m)%10;
     zBuf[17] = ':';
     if( x.useSubsec ){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-      s = (int)(1000*x.s);
-#else
       s = (int)(1000.0*x.s + 0.5);
-#endif
       zBuf[18] = '0' + (s/10000)%10;
       zBuf[19] = '0' + (s/1000)%10;
       zBuf[20] = '.';
@@ -1282,11 +1186,7 @@ static void timeFunc(
     zBuf[4] = '0' + (x.m)%10;
     zBuf[5] = ':';
     if( x.useSubsec ){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-      s = (int)(1000*x.s);
-#else
       s = (int)(1000.0*x.s + 0.5);
-#endif
       zBuf[6] = '0' + (s/10000)%10;
       zBuf[7] = '0' + (s/1000)%10;
       zBuf[8] = '.';
@@ -1397,11 +1297,7 @@ static void strftimeFunc(
       }
       case 'f': {
         double s = x.s;
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-        if (s >= 60) s = 60;
-#else
         if( s>59.999 ) s = 59.999;
-#endif
         sqlite3_str_appendf(&sRes, "%06.3f", s);
         break;
       }
@@ -1441,11 +1337,7 @@ static void strftimeFunc(
         break;
       }
       case 'J': {
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-        sqlite3_str_appendf(&sRes,"%.16g",x.iJD/86400000);
-#else
         sqlite3_str_appendf(&sRes,"%.16g",x.iJD/86400000.0);
-#endif
         break;
       }
       case 'm': {
@@ -1471,13 +1363,8 @@ static void strftimeFunc(
       }
       case 's': {
         if( x.useSubsec ){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-          sqlite3_str_appendf(&sRes,"%.3f",
-                (x.iJD - 21086676*(i64)10000000)/1000);
-#else
           sqlite3_str_appendf(&sRes,"%.3f",
                 (x.iJD - 21086676*(i64)10000000)/1000.0);
-#endif
         }else{
           i64 iS = (i64)(x.iJD/1000 - 21086676*(i64)10000);
           sqlite3_str_appendf(&sRes,"%lld",iS);
