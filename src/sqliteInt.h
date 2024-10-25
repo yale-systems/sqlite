@@ -682,7 +682,7 @@
 # ifndef SQLITE_BIG_DBL
 #   define SQLITE_BIG_DBL (((sqlite3_int64)1)<<50)
 # endif
-#ifndef FREEBSD_KERNEL
+#if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
 # define SQLITE_OMIT_DATETIME_FUNCS 1
 #else
  #define SQLITE_OMIT_LOCALTIME

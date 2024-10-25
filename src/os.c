@@ -312,7 +312,11 @@ int sqlite3OsCurrentTimeInt64(sqlite3_vfs *pVfs, sqlite3_int64 *pTimeOut){
   }else{
     double r;
     rc = pVfs->xCurrentTime(pVfs, &r);
+#if defined(SQLITE_OMIT_FLOATING_POINT)
+    *pTimeOut = (sqlite3_int64)(r*86400000);
+#else
     *pTimeOut = (sqlite3_int64)(r*86400000.0);
+#endif
   }
   return rc;
 }
