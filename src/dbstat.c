@@ -767,7 +767,9 @@ static int statFilter(
   }
   if( idxNum & 0x04 ){
     /* aggregate=? constraint is present */
+    enterFPURegion();
     pCsr->isAgg = sqlite3_value_double(argv[iArg++])!=0.0;
+    exitFPURegion();
   }else{
     pCsr->isAgg = 0;
   }

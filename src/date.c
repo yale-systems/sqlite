@@ -204,7 +204,9 @@ zulu_time:
 */
 static int parseHhMmSs(const char *zDate, DateTime *p){
   int h, m, s;
+  enterFPURegion();
   double ms = 0.0;
+  exitFPURegion();
   if( getDigits(zDate, "20c:20e", &h, &m)!=2 ){
     return 1;
   }
@@ -216,11 +218,15 @@ static int parseHhMmSs(const char *zDate, DateTime *p){
     }
     zDate += 2;
     if( *zDate=='.' && sqlite3Isdigit(zDate[1]) ){
+      enterFPURegion();
       double rScale = 1.0;
+      exitFPURegion();
       zDate++;
       while( sqlite3Isdigit(*zDate) ){
+	enterFPURegion();
         ms = ms*10.0 + *zDate - '0';
         rScale *= 10.0;
+	exitFPURegion();
         zDate++;
       }
       ms /= rScale;
@@ -233,7 +239,9 @@ static int parseHhMmSs(const char *zDate, DateTime *p){
   p->validHMS = 1;
   p->h = h;
   p->m = m;
+  enterFPURegion();
   p->s = s + ms;
+  exitFPURegion();
   if( parseTimezone(zDate, p) ) return 1;
   p->validTZ = (p->tz!=0)?1:0;
   return 0;
@@ -278,10 +286,14 @@ static void computeJD(DateTime *p){
   B = 2 - A + (A/4);
   X1 = 36525*(Y+4716)/100;
   X2 = 306001*(M+1)/10000;
+  enterFPURegion();
   p->iJD = (sqlite3_int64)((X1 + X2 + D + B - 1524.5 ) * 86400000);
+  exitFPURegion();
   p->validJD = 1;
   if( p->validHMS ){
+    enterFPURegion();
     p->iJD += p->h*3600000 + p->m*60000 + (sqlite3_int64)(p->s*1000 + 0.5);
+    exitFPURegion();
     if( p->validTZ ){
       p->iJD -= p->tz*60000;
       p->validYMD = 0;
@@ -359,10 +371,12 @@ static int setDateTimeToCurrent(sqlite3_context *context, DateTime *p){
 static void setRawDateNumber(DateTime *p, double r){
   p->s = r;
   p->rawS = 1;
+  enterFPURegion();
   if( r>=0.0 && r<5373484.5 ){
     p->iJD = (sqlite3_int64)(r*86400000.0 + 0.5);
     p->validJD = 1;
   }
+  exitFPURegion();
 }
 
 /*
@@ -393,7 +407,13 @@ static int parseDateOrTime(
     return 0;
   }else if( sqlite3StrICmp(zDate,"now")==0 && sqlite3NotPureFunc(context) ){
     return setDateTimeToCurrent(context, p);
-  }else if( sqlite3AtoF(zDate, &r, sqlite3Strlen30(zDate), SQLITE_UTF8)>0 ){
+  }
+
+  enterFPURegion();
+  int ret = sqlite3AtoF(zDate, &r, sqlite3Strlen30(zDate), SQLITE_UTF8);
+  exitFPURegion();
+
+  if( ret > 0){
     setRawDateNumber(p, r);
     return 0;
   }else if( (sqlite3StrICmp(zDate,"subsec")==0
@@ -438,13 +458,19 @@ static void computeYMD(DateTime *p){
     return;
   }else{
     Z = (int)((p->iJD + 43200000)/86400000);
+    enterFPURegion();
     A = (int)((Z - 1867216.25)/36524.25);
+    exitFPURegion();
     A = Z + 1 + A - (A/4);
     B = A + 1524;
+    enterFPURegion();
     C = (int)((B - 122.1)/365.25);
+    exitFPURegion();
     D = (36525*(C&32767))/100;
+    enterFPURegion();
     E = (int)((B-D)/30.6001);
     X1 = (int)(30.6001*E);
+    exitFPURegion();
     p->D = B - D - X1;
     p->M = E<14 ? E-1 : E-13;
     p->Y = p->M>2 ? C - 4716 : C - 4715;
@@ -461,7 +487,9 @@ static void computeHMS(DateTime *p){
   if( p->validHMS ) return;
   computeJD(p);
   day_ms = (int)((p->iJD + 43200000) % 86400000);
+  enterFPURegion();
   p->s = (day_ms % 60000)/1000.0;
+  exitFPURegion();
   day_min = day_ms/60000;
   p->m = day_min % 60;
   p->h = day_min / 60;
@@ -610,7 +638,9 @@ static int toLocaltime(
   p->D = sLocal.tm_mday;
   p->h = sLocal.tm_hour;
   p->m = sLocal.tm_min;
+  enterFPURegion();
   p->s = sLocal.tm_sec + (p->iJD%1000)*0.001;
+  exitFPURegion();
   p->validYMD = 1;
   p->validHMS = 1;
   p->validJD = 0;
@@ -654,9 +684,13 @@ static void autoAdjustDate(DateTime *p){
   }else if( p->s>=-21086676*(i64)10000        /* -4713-11-24 12:00:00 */
          && p->s<=(25340230*(i64)10000)+799   /*  9999-12-31 23:59:59 */
   ){
+    enterFPURegion();
     double r = p->s*1000.0 + 210866760000000.0;
+    exitFPURegion();
     clearYMD_HMS_TZ(p);
+    enterFPURegion();
     p->iJD = (sqlite3_int64)(r + 0.5);
+    exitFPURegion();
     p->validJD = 1;
     p->rawS = 0;
   }
@@ -750,11 +784,15 @@ static int parseModifier(
       */
       if( sqlite3_stricmp(z, "unixepoch")==0 && p->rawS ){
         if( idx>1 ) return 1;  /* IMP: R-49255-55373 */
+	enterFPURegion();
         r = p->s*1000.0 + 210866760000000.0;
-        if( r>=0.0 && r<464269060800000.0 )
-        {
+	int cond = r>=0.0 && r<464269060800000.0;
+	exitFPURegion();
+        if( cond ){
           clearYMD_HMS_TZ(p);
+	  enterFPURegion();
           p->iJD = (sqlite3_int64)(r + 0.5);
+	  exitFPURegion();
           p->validJD = 1;
           p->rawS = 0;
           rc = 0;
@@ -800,10 +838,12 @@ static int parseModifier(
       ** weekday N where 0==Sunday, 1==Monday, and so forth.  If the
       ** date is already on the appropriate weekday, this is a no-op.
       */
-      if( sqlite3_strnicmp(z, "weekday ", 8)==0
-               && sqlite3AtoF(&z[8], &r, sqlite3Strlen30(&z[8]), SQLITE_UTF8)>0
-               && r>=0.0 && r<7.0 && (n=(int)r)==r )
-        {
+      enterFPURegion();
+      int cond = sqlite3_strnicmp(z, "weekday ", 8)==0
+	  && sqlite3AtoF(&z[8], &r, sqlite3Strlen30(&z[8]), SQLITE_UTF8)>0
+               && r>=0.0 && r<7.0 && (n=(int)r)==r;
+      exitFPURegion();
+      if( cond ){
         sqlite3_int64 Z;
         computeYMD_HMS(p);
         p->validTZ = 0;
@@ -844,7 +884,9 @@ static int parseModifier(
       computeYMD(p);
       p->validHMS = 1;
       p->h = p->m = 0;
+      enterFPURegion();
       p->s = 0.0;
+      exitFPURegion();
       p->rawS = 0;
       p->validTZ = 0;
       p->validJD = 0;
@@ -885,7 +927,10 @@ static int parseModifier(
           if( n==6 && getDigits(&z[1], "50f", &Y)==1 ) break;
         }
       }
-      if( sqlite3AtoF(z, &r, n, SQLITE_UTF8)<=0 ){
+      enterFPURegion();
+      int cond = sqlite3AtoF(z, &r, n, SQLITE_UTF8);
+      exitFPURegion();
+      if( cond<=0 ){
         assert( rc==1 );
         break;
       }
@@ -967,7 +1012,9 @@ static int parseModifier(
       if( sqlite3UpperToLower[(u8)z[n-1]]=='s' ) n--;
       computeJD(p);
       assert( rc==1 );
+      enterFPURegion();
       rRounder = r<0 ? -0.5 : +0.5;
+      exitFPURegion();
       for(i=0; i<ArraySize(aXformType); i++){
         if( aXformType[i].nName==n
          && sqlite3_strnicmp(aXformType[i].zName, z, n)==0
@@ -1078,7 +1125,9 @@ static void juliandayFunc(
   DateTime x;
   if( isDate(context, argc, argv, &x)==0 ){
     computeJD(&x);
+    enterFPURegion();
     sqlite3_result_double(context, x.iJD/86400000.0);
+    exitFPURegion();
   }
 }
 
@@ -1097,7 +1146,9 @@ static void unixepochFunc(
   if( isDate(context, argc, argv, &x)==0 ){
     computeJD(&x);
     if( x.useSubsec ){
+      enterFPURegion();
       sqlite3_result_double(context, (x.iJD - 21086676*(i64)10000000)/1000.0);
+      exitFPURegion();
     }else{
       sqlite3_result_int64(context, x.iJD/1000 - 21086676*(i64)10000);
     }
@@ -1139,7 +1190,9 @@ static void datetimeFunc(
     zBuf[16] = '0' + (x.m)%10;
     zBuf[17] = ':';
     if( x.useSubsec ){
+      enterFPURegion();
       s = (int)(1000.0*x.s + 0.5);
+      exitFPURegion();
       zBuf[18] = '0' + (s/10000)%10;
       zBuf[19] = '0' + (s/1000)%10;
       zBuf[20] = '.';
@@ -1186,7 +1239,9 @@ static void timeFunc(
     zBuf[4] = '0' + (x.m)%10;
     zBuf[5] = ':';
     if( x.useSubsec ){
+      enterFPURegion();
       s = (int)(1000.0*x.s + 0.5);
+      exitFPURegion();
       zBuf[6] = '0' + (s/10000)%10;
       zBuf[7] = '0' + (s/1000)%10;
       zBuf[8] = '.';
@@ -1570,7 +1625,6 @@ static void ctimestampFunc(
 ** and strftime(). The format string to pass to strftime() is supplied
 ** as the user-data for the function.
 */
-
 static void currentTimeFunc(
   sqlite3_context *context,
   int argc,

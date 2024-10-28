@@ -11,34 +11,36 @@ static int kern_vfs_current_time(sqlite3_vfs *vfs, double *pTime);
 static int kern_vfs_current_time_int64(sqlite3_vfs *vfs, sqlite3_int64 *piNow);
 
 static sqlite3_vfs kern_vfs = {
-  3,                          // iVersion
-  sizeof(sqlite3_file),       // szOsFile
-  SQLITE_MAX_PATHLEN,         // mxPathname
-  NULL,                       // pNext
-  "kern_vfs",                 // zName
-  NULL,                       // pAppData
-  NULL,                       // xOpen
-  NULL,                       // xDelete
-  NULL,                       // xAccess
-  NULL,                       // xFullPathname
-  NULL,                       // xDlOpen
-  NULL,                       // xDlError
-  NULL,                       // xDlSym
-  NULL,                       // xDlClose
-  NULL,                       // xRandomness
-  NULL,                       // xSleep
-  kern_vfs_current_time,      // xCurrentTime
-  NULL,                       // xGetLastError
+  3,                           // iVersion
+  sizeof(sqlite3_file),        // szOsFile
+  SQLITE_MAX_PATHLEN,          // mxPathname
+  NULL,                        // pNext
+  "kern_vfs",                  // zName
+  NULL,                        // pAppData
+  NULL,                        // xOpen
+  NULL,                        // xDelete
+  NULL,                        // xAccess
+  NULL,                        // xFullPathname
+  NULL,                        // xDlOpen
+  NULL,                        // xDlError
+  NULL,                        // xDlSym
+  NULL,                        // xDlClose
+  NULL,                        // xRandomness
+  NULL,                        // xSleep
+  kern_vfs_current_time,       // xCurrentTime
+  NULL,                        // xGetLastError
   kern_vfs_current_time_int64, // xCurrentTimeInt64
-  NULL,                       /* xSetSystemCall */
-  NULL,                       /* xGetSystemCall */
-  NULL,                       /* xNextSystemCall */
+  NULL,                        // xSetSystemCall
+  NULL,                        // xGetSystemCall
+  NULL,                        // xNextSystemCall
 };
 
 static int kern_vfs_current_time(sqlite3_vfs *vfs, double *pTime) {
+  exitFPURegion();
   static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
   struct timespec64 ts;
   ktime_get_real_ts64(&ts);
+  enterFPURegion();
   *pTime = unixEpoch + 1000 * (sqlite3_int64)ts.tv_sec + ts.tv_nsec / 1000000;
   // *pTime = ts.tv_sec + ts.tv_nsec * 1e-9;  // to seconds
   return SQLITE_OK;

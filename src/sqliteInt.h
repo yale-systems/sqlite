@@ -697,14 +697,12 @@
 */
 #if !defined(SQLITE_OMIT_FLOATING_POINT) && defined(LINUX_KERNEL_BUILD)
 # include <linux/asm/fpu.h>
-# define ENTER_FPU_OPERATIO kernel_fpu_begin();
-# define EXIT_FPU_OPERATION kernel_fpu_end();
+# define enterFPURegion() kernel_fpu_begin()
+# define exitFPURegion() kernel_fpu_end()
 #else
-# define ENTER_FPU_OPERATION
-# define EXIT_FPU_OPERATION
+# define enterFPURegion() (void)0
+# define exitFPURegion() (void)0
 #endif
-
-    
 
 /*
 ** OMIT_TEMPDB is set to 1 if SQLITE_OMIT_TEMPDB is defined, or 0
