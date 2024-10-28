@@ -43,6 +43,7 @@
 **      Willmann-Bell, Inc
 **      Richmond, Virginia (USA)
 */
+#include "fpu.h"
 #include "sqliteInt.h"
 
 #if !defined(SQLITE_OMIT_DATETIME_FUNCS)
@@ -1351,9 +1352,11 @@ static void strftimeFunc(
         break;
       }
       case 'f': {
+	enterFPURegion();
         double s = x.s;
         if( s>59.999 ) s = 59.999;
         sqlite3_str_appendf(&sRes, "%06.3f", s);
+	exitFPURegion();
         break;
       }
       case 'F': {
@@ -1392,7 +1395,9 @@ static void strftimeFunc(
         break;
       }
       case 'J': {
+	enterFPURegion();
         sqlite3_str_appendf(&sRes,"%.16g",x.iJD/86400000.0);
+	exitFPURegion();
         break;
       }
       case 'm': {
@@ -1418,8 +1423,10 @@ static void strftimeFunc(
       }
       case 's': {
         if( x.useSubsec ){
+	  enterFPURegion();
           sqlite3_str_appendf(&sRes,"%.3f",
                 (x.iJD - 21086676*(i64)10000000)/1000.0);
+	  exitFPURegion();
         }else{
           i64 iS = (i64)(x.iJD/1000 - 21086676*(i64)10000);
           sqlite3_str_appendf(&sRes,"%lld",iS);
@@ -1592,8 +1599,10 @@ static void timediffFunc(
   d1.validTZ = 0;
   computeYMD_HMS(&d1);
   sqlite3StrAccumInit(&sRes, 0, 0, 0, 100);
+  enterFPURegion();
   sqlite3_str_appendf(&sRes, "%c%04d-%02d-%02d %02d:%02d:%06.3f",
        sign, Y, M, d1.D-1, d1.h, d1.m, d1.s);
+  exitFPURegion();
   sqlite3ResultStrAccum(context, &sRes);
 }
 

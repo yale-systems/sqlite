@@ -174,7 +174,7 @@ LIBOBJS0 = alter.lo analyze.lo attach.lo auth.lo \
          backup.lo bitvec.lo btmutex.lo btree.lo build.lo \
          callback.lo complete.lo ctime.lo \
          date.lo dbpage.lo dbstat.lo delete.lo \
-         expr.lo fault.lo fkey.lo \
+         expr.lo fault.lo fkey.lo fpu.lo \
          fts3.lo fts3_aux.lo fts3_expr.lo fts3_hash.lo fts3_icu.lo \
          fts3_porter.lo fts3_snippet.lo fts3_tokenizer.lo fts3_tokenizer1.lo \
          fts3_tokenize_vtab.lo \
@@ -229,6 +229,8 @@ SRC = \
   $(TOP)/src/expr.c \
   $(TOP)/src/fault.c \
   $(TOP)/src/fkey.c \
+  $(TOP)/src/fpu.c \
+  $(TOP)/src/fpu.h \
   $(TOP)/src/func.c \
   $(TOP)/src/global.c \
   $(TOP)/src/hash.c \
@@ -476,6 +478,7 @@ TESTSRC2 = \
   $(TOP)/src/dbpage.c \
   $(TOP)/src/dbstat.c \
   $(TOP)/src/expr.c \
+  $(TOP)/src/fpu.c \
   $(TOP)/src/func.c \
   $(TOP)/src/global.c \
   $(TOP)/src/insert.c \
@@ -527,6 +530,7 @@ TESTSRC2 = \
 HDR = \
    $(TOP)/src/btree.h \
    $(TOP)/src/btreeInt.h \
+   $(TOP)/src/fpu.h \
    $(TOP)/src/hash.h \
    $(TOP)/src/hwtime.h \
    keywordhash.h \
@@ -917,6 +921,9 @@ fkey.lo:	$(TOP)/src/fkey.c $(HDR)
 
 func.lo:	$(TOP)/src/func.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/func.c
+
+os_kfbsd.lo:	$(TOP)/src/fpu.c $(HDR)
+	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/fpu.c
 
 global.lo:	$(TOP)/src/global.c $(HDR)
 	$(LTCOMPILE) $(TEMP_STORE) -c $(TOP)/src/global.c

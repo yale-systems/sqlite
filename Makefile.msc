@@ -1339,6 +1339,7 @@ SRC00 = \
   $(TOP)\src\expr.c \
   $(TOP)\src\fault.c \
   $(TOP)\src\fkey.c \
+  $(TOP)\src\fpu.c \
   $(TOP)\src\func.c \
   $(TOP)\src\global.c \
   $(TOP)\src\hash.c \
@@ -2025,6 +2026,9 @@ fault.lo:	$(TOP)\src\fault.c $(HDR)
 
 fkey.lo:	$(TOP)\src\fkey.c $(HDR)
 	$(LTCOMPILE) $(CORE_COMPILE_OPTS) -c $(TOP)\src\fkey.c
+
+fpu.lo:	$(TOP)\src\fpu.c $(HDR)
+	$(LTCOMPILE) $(CORE_COMPILE_OPTS) -c $(TOP)\src\fpu.c
 
 func.lo:	$(TOP)\src\func.c $(HDR)
 	$(LTCOMPILE) $(CORE_COMPILE_OPTS) -c $(TOP)\src\func.c

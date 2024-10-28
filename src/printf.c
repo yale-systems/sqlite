@@ -208,6 +208,7 @@ void sqlite3_str_vappendf(
   PrintfArguments *pArgList = 0; /* Arguments for SQLITE_PRINTF_SQLFUNC */
   char buf[etBUFSIZE];       /* Conversion buffer */
 
+  exitFPURegion();
   /* pAccum never starts out with an empty buffer that was obtained from 
   ** malloc().  This precondition is required by the mprintf("%z...")
   ** optimization. */
@@ -479,16 +480,18 @@ void sqlite3_str_vappendf(
         break;
       case etFLOAT:
       case etEXP:
-      case etGENERIC: {
+      case etGENERIC: {	
         FpDecode s;
         int iRound;
         int j;
 
+	enterFPURegion();
         if( bArgList ){
           realvalue = getDoubleArg(pArgList);
         }else{
           realvalue = va_arg(ap,double);
         }
+	exitFPURegion();
         if( precision<0 ) precision = 6;         /* Set default precision */
 #ifdef SQLITE_FP_PRECISION_LIMIT
         if( precision>SQLITE_FP_PRECISION_LIMIT ){
@@ -502,7 +505,9 @@ void sqlite3_str_vappendf(
         }else{
           iRound = precision+1;
         }
+	enterFPURegion();
         sqlite3FpDecode(&s, realvalue, iRound, flag_altform2 ? 26 : 16);
+	exitFPURegion();
         if( s.isSpecial ){
           if( s.isSpecial==2 ){
             bufpt = flag_zeropad ? "null" : "NaN";
