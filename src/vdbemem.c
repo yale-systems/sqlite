@@ -120,8 +120,10 @@ static void vdbeMemRenderNum(int sz, char *zBuf, Mem *p){
 #endif
   }else{
     sqlite3StrAccumInit(&acc, 0, zBuf, sz, 0);
+    enterFPURegion();
     sqlite3_str_appendf(&acc, "%!.15g", 
          (p->flags & MEM_IntReal)!=0 ? (double)p->u.i : p->u.r);
+    exitFPURegion();
     assert( acc.zText==zBuf && acc.mxAlloc<=0 );
     zBuf[acc.nChar] = 0; /* Fast version of sqlite3StrAccumFinish(&acc) */
     p->n = acc.nChar;
@@ -635,7 +637,10 @@ i64 sqlite3VdbeIntValue(const Mem *pMem){
     testcase( flags & MEM_IntReal );
     return pMem->u.i;
   }else if( flags & MEM_Real ){
-    return sqlite3RealToI64(pMem->u.r);
+    enterFPURegion();
+    i64 res = sqlite3RealToI64(pMem->u.r);
+    exitFPURegion();
+    return res;
   }else if( (flags & (MEM_Str|MEM_Blob))!=0 && pMem->z!=0 ){
     return memIntValue(pMem);
   }else{
@@ -697,6 +702,7 @@ void sqlite3VdbeIntegerAffinity(Mem *pMem){
   if( pMem->flags & MEM_IntReal ){
     MemSetTypeFlag(pMem, MEM_Int);
   }else{
+    enterFPURegion();
     i64 ix = sqlite3RealToI64(pMem->u.r);
 
     /* Only mark the value as an integer if
@@ -713,6 +719,7 @@ void sqlite3VdbeIntegerAffinity(Mem *pMem){
       pMem->u.i = ix;
       MemSetTypeFlag(pMem, MEM_Int);
     }
+    exitFPURegion();
   }
 }
 
@@ -739,7 +746,9 @@ int sqlite3VdbeMemRealify(Mem *pMem){
   assert( pMem->db==0 || sqlite3_mutex_held(pMem->db->mutex) );
   assert( EIGHT_BYTE_ALIGNMENT(pMem) );
 
+  enterFPURegion();
   pMem->u.r = sqlite3VdbeRealValue(pMem);
+  exitFPURegion();
   MemSetTypeFlag(pMem, MEM_Real);
   return SQLITE_OK;
 }
@@ -789,6 +798,7 @@ int sqlite3VdbeMemNumerify(Mem *pMem){
     sqlite3_int64 ix;
     assert( (pMem->flags & (MEM_Blob|MEM_Str))!=0 );
     assert( pMem->db==0 || sqlite3_mutex_held(pMem->db->mutex) );
+    enterFPURegion();
     rc = sqlite3AtoF(pMem->z, &pMem->u.r, pMem->n, pMem->enc);
     if( ((rc==0 || rc==1) && sqlite3Atoi64(pMem->z, &ix, pMem->n, pMem->enc)<=1)
      || sqlite3RealSameAsInt(pMem->u.r, (ix = sqlite3RealToI64(pMem->u.r)))
@@ -798,6 +808,7 @@ int sqlite3VdbeMemNumerify(Mem *pMem){
     }else{
       MemSetTypeFlag(pMem, MEM_Real);
     }
+    exitFPURegion();
   }
   assert( (pMem->flags & (MEM_Int|MEM_Real|MEM_IntReal|MEM_Null))!=0 );
   pMem->flags &= ~(MEM_Str|MEM_Blob|MEM_Zero);
@@ -1672,10 +1683,14 @@ static int valueFromExpr(
     ){
       sqlite3VdbeMemNumerify(pVal);
       if( pVal->flags & MEM_Real ){
+	enterFPURegion();
         pVal->u.r = -pVal->u.r;
+	exitFPURegion();
       }else if( pVal->u.i==SMALLEST_INT64 ){
 #ifndef SQLITE_OMIT_FLOATING_POINT
+	enterFPURegion();
         pVal->u.r = -(double)SMALLEST_INT64;
+	exitFPURegion();
 #else
         pVal->u.r = LARGEST_INT64;
 #endif

@@ -1186,6 +1186,7 @@ char *sqlite3VMPrintf(sqlite3 *db, const char *zFormat, va_list ap){
   char zBase[SQLITE_PRINT_BUF_SIZE];
   StrAccum acc;
   assert( db!=0 );
+  exitFPURegion();
   sqlite3StrAccumInit(&acc, db, zBase, sizeof(zBase),
                       db->aLimit[SQLITE_LIMIT_LENGTH]);
   acc.printfFlags = SQLITE_PRINTF_INTERNAL;
@@ -1219,6 +1220,7 @@ char *sqlite3_vmprintf(const char *zFormat, va_list ap){
   char zBase[SQLITE_PRINT_BUF_SIZE];
   StrAccum acc;
 
+  exitFPURegion();
 #ifdef SQLITE_ENABLE_API_ARMOR  
   if( zFormat==0 ){
     (void)SQLITE_MISUSE_BKPT;
@@ -1241,6 +1243,8 @@ char *sqlite3_vmprintf(const char *zFormat, va_list ap){
 char *sqlite3_mprintf(const char *zFormat, ...){
   va_list ap;
   char *z;
+
+  exitFPURegion();
 #ifndef SQLITE_OMIT_AUTOINIT
   if( sqlite3_initialize() ) return 0;
 #endif
@@ -1265,6 +1269,7 @@ char *sqlite3_mprintf(const char *zFormat, ...){
 */
 char *sqlite3_vsnprintf(int n, char *zBuf, const char *zFormat, va_list ap){
   StrAccum acc;
+  exitFPURegion();
   if( n<=0 ) return zBuf;
 #ifdef SQLITE_ENABLE_API_ARMOR
   if( zBuf==0 || zFormat==0 ) {
@@ -1281,6 +1286,7 @@ char *sqlite3_vsnprintf(int n, char *zBuf, const char *zFormat, va_list ap){
 char *sqlite3_snprintf(int n, char *zBuf, const char *zFormat, ...){
   StrAccum acc;
   va_list ap;
+  exitFPURegion();
   if( n<=0 ) return zBuf;
 #ifdef SQLITE_ENABLE_API_ARMOR
   if( zBuf==0 || zFormat==0 ) {
@@ -1367,6 +1373,7 @@ void sqlite3DebugPrintf(const char *zFormat, ...){
 */
 void sqlite3_str_appendf(StrAccum *p, const char *zFormat, ...){
   va_list ap;
+  exitFPURegion();
   va_start(ap,zFormat);
   sqlite3_str_vappendf(p, zFormat, ap);
   va_end(ap);

@@ -259,7 +259,9 @@ static int statBestIndex(sqlite3_vtab *tab, sqlite3_index_info *pIdxInfo){
     pIdxInfo->aConstraintUsage[iAgg].argvIndex = ++i;
     pIdxInfo->idxNum |= 0x04;
   }
+  enterFPURegion();
   pIdxInfo->estimatedCost = 1.0;
+  exitFPURegion();
 
   /* Records are always returned in ascending order of (name, path). 
   ** If this will satisfy the client, set the orderByConsumed flag so that 

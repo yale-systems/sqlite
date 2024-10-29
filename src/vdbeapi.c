@@ -1805,9 +1805,11 @@ int sqlite3_bind_value(sqlite3_stmt *pStmt, int i, const sqlite3_value *pValue){
     }
     case SQLITE_FLOAT: {
       assert( pValue->flags & (MEM_Real|MEM_IntReal) );
+      enterFPURegion();
       rc = sqlite3_bind_double(pStmt, i,
           (pValue->flags & MEM_Real) ? pValue->u.r : (double)pValue->u.i
       );
+      exitFPURegion();
       break;
     }
     case SQLITE_BLOB: {
@@ -2425,6 +2427,7 @@ int sqlite3_stmt_scanstatus_v2(
       break;
     }
     case SQLITE_SCANSTAT_EST: {
+      enterFPURegion();
       double r = 1.0;
       LogEst x = pScan->nEst;
       while( x<100 ){
@@ -2432,6 +2435,7 @@ int sqlite3_stmt_scanstatus_v2(
         r *= 0.5;
       }
       *(double*)pOut = r*sqlite3LogEstToInt(x);
+      exitFPURegion();
       break;
     }
     case SQLITE_SCANSTAT_NAME: {

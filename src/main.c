@@ -177,10 +177,13 @@ static SQLITE_NOINLINE int hasHighPrecisionDouble(int rc){
     ** actually works is to run an experiment. */
     LONGDOUBLE_TYPE a, b, c;
     rc++;
+    enterFPURegion();
     a = 1.0+rc*0.1;
     b = 1.0e+18+rc*25.0;
     c = a+b;
-    return b!=c;
+    int res = b != c;
+    exitFPURegion();
+    return res;
   }
 }
 
@@ -365,7 +368,9 @@ int sqlite3_initialize(void){
     assert(sizeof(x)==8);
     assert(sizeof(x)==sizeof(y));
     memcpy(&y, &x, 8);
+    enterFPURegion();
     assert( sqlite3IsNaN(y) );
+    exitFPURegion();
   }
 #endif
 #endif
@@ -4601,8 +4606,10 @@ int sqlite3_test_control(int op, ...){
     ** Test access for the LogEst conversion routines.
     */
     case SQLITE_TESTCTRL_LOGEST: {
+      enterFPURegion();
       double rIn = va_arg(ap, double);
       LogEst rLogEst = sqlite3LogEstFromDouble(rIn);
+      exitFPURegion();
       int *pI1 = va_arg(ap,int*);
       u64 *pU64 = va_arg(ap,u64*);
       int *pI2 = va_arg(ap,int*);

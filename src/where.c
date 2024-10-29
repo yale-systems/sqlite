@@ -4002,7 +4002,9 @@ static int whereLoopAddVirtualOne(
   pIdxInfo->idxStr = 0;
   pIdxInfo->idxNum = 0;
   pIdxInfo->orderByConsumed = 0;
+  enterFPURegion();
   pIdxInfo->estimatedCost = SQLITE_BIG_DBL / (double)2;
+  exitFPURegion();
   pIdxInfo->estimatedRows = 25;
   pIdxInfo->idxFlags = 0;
   pIdxInfo->colUsed = (sqlite3_int64)pSrc->colUsed;
@@ -4112,7 +4114,9 @@ static int whereLoopAddVirtualOne(
   pNew->u.vtab.isOrdered = (i8)(pIdxInfo->orderByConsumed ?
       pIdxInfo->nOrderBy : 0);
   pNew->rSetup = 0;
+  enterFPURegion();
   pNew->rRun = sqlite3LogEstFromDouble(pIdxInfo->estimatedCost);
+  exitFPURegion();
   pNew->nOut = sqlite3LogEst(pIdxInfo->estimatedRows);
 
   /* Set the WHERE_ONEROW flag if the xBestIndex() method indicated
@@ -5760,11 +5764,13 @@ static SQLITE_NOINLINE void whereCheckIfBloomFilterIsUseful(
         testcase( pItem->fg.jointype & JT_LEFT );
         pLoop->wsFlags |= WHERE_BLOOMFILTER;
         pLoop->wsFlags &= ~WHERE_IDX_ONLY;
+	enterFPURegion();
         WHERETRACE(0xffffffff, (
            "-> use Bloom-filter on loop %c because there are ~%.1e "
            "lookups into %s which has only ~%.1e rows\n",
            pLoop->cId, (double)sqlite3LogEstToInt(nSearch), pTab->zName,
            (double)sqlite3LogEstToInt(pTab->nRowLogEst)));
+	exitFPURegion();
       }
     }
     nSearch += pLoop->nOut;

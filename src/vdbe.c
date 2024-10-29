@@ -346,15 +346,17 @@ static void applyNumericAffinity(Mem *pRec, int bTryForInt){
   u8 enc = pRec->enc;
   int rc;
   assert( (pRec->flags & (MEM_Str|MEM_Int|MEM_Real|MEM_IntReal))==MEM_Str );
+  enterFPURegion();
   rc = sqlite3AtoF(pRec->z, &rValue, pRec->n, enc);
   if( rc<=0 ) return;
-  if( rc==1 && alsoAnInt(pRec, rValue, &pRec->u.i) ){
+  if( rc == 1 && alsoAnInt(pRec, rValue, &pRec->u.i) ){
     pRec->flags |= MEM_Int;
   }else{
     pRec->u.r = rValue;
     pRec->flags |= MEM_Real;
     if( bTryForInt ) sqlite3VdbeIntegerAffinity(pRec);
   }
+  exitFPURegion();
   /* TEXT->NUMERIC is many->one.  Hence, it is important to invalidate the
   ** string representation after computing a numeric equivalent, because the
   ** string representation might not be the canonical representation for the
@@ -461,7 +463,9 @@ static u16 SQLITE_NOINLINE computeNumericType(Mem *pMem){
     pMem->u.i = 0;
     return MEM_Int;
   }
+  enterFPURegion();
   rc = sqlite3AtoF(pMem->z, &pMem->u.r, pMem->n, pMem->enc);
+  exitFPURegion();
   if( rc<=0 ){
     if( rc==0 && sqlite3Atoi64(pMem->z, &ix, pMem->n, pMem->enc)<=1 ){
       pMem->u.i = ix;
@@ -580,7 +584,16 @@ static void memTracePrint(Mem *p){
     printf(" i:%lld", p->u.i);
 #ifndef SQLITE_OMIT_FLOATING_POINT
   }else if( p->flags & MEM_Real ){
+# ifndef LINUX_KERNEL_BUILD
     printf(" r:%.17g", p->u.r);
+# else
+    // the Linux kernel does not have printf and a formatting for floating point
+    enterFPURegion();
+    int intpart = (int) p->u.r;
+    int decpart = (int)((u - intpart)*100000);
+    exitFPURegion();
+    pr_info(" r:%d.%d", intpart, decpart);
+# endif
 #endif
   }else if( sqlite3VdbeMemIsRowSet(p) ){
     printf(" (rowset)");
@@ -1341,8 +1354,10 @@ case OP_Int64: {           /* out2 */
 case OP_Real: {            /* same as TK_FLOAT, out2 */
   pOut = out2Prerelease(p, pOp);
   pOut->flags = MEM_Real;
+  enterFPURegion();
   assert( !sqlite3IsNaN(*pOp->p4.pReal) );
   pOut->u.r = *pOp->p4.pReal;
+  exitFPURegion();
   break;
 }
 #endif
@@ -1877,6 +1892,7 @@ int_math:
     type2 = numericType(pIn2);
     if( (type1 & type2 & MEM_Int)!=0 ) goto int_math;
 fp_math:
+    enterFPURegion();
     rA = sqlite3VdbeRealValue(pIn1);
     rB = sqlite3VdbeRealValue(pIn2);
     switch( pOp->opcode ){
@@ -1885,14 +1901,20 @@ fp_math:
       case OP_Multiply:    rB *= rA;       break;
       case OP_Divide: {
         /* (double)0 In case of SQLITE_OMIT_FLOATING_POINT... */
-        if( rA==(double)0 ) goto arithmetic_result_is_null;
+	  if( rA==(double)0 ) {
+	      exitFPURegion();
+	      goto arithmetic_result_is_null;
+	  }
         rB /= rA;
         break;
       }
       default: {
         iA = sqlite3VdbeIntValue(pIn1);
         iB = sqlite3VdbeIntValue(pIn2);
-        if( iA==0 ) goto arithmetic_result_is_null;
+        if( iA==0 ) {
+	    exitFPURegion();
+	    goto arithmetic_result_is_null;
+	}
         if( iA==-1 ) iA = 1;
         rB = (double)(iB % iA);
         break;
@@ -1903,11 +1925,13 @@ fp_math:
     MemSetTypeFlag(pOut, MEM_Int);
 #else
     if( sqlite3IsNaN(rB) ){
+      exitFPURegion();
       goto arithmetic_result_is_null;
     }
     pOut->u.r = rB;
     MemSetTypeFlag(pOut, MEM_Real);
 #endif
+    exitFPURegion();
   }
   break;
 
@@ -3273,7 +3297,9 @@ case OP_TypeCheck: {
               pIn1->flags |= MEM_IntReal;
               pIn1->flags &= ~MEM_Int;
             }else{
+	      enterFPURegion();
               pIn1->u.r = (double)pIn1->u.i;
+	      exitFPURegion();
               pIn1->flags |= MEM_Real;
               pIn1->flags &= ~MEM_Int;
             }
@@ -3336,7 +3362,9 @@ case OP_Affinity: {
         pIn1->flags |= MEM_IntReal;
         pIn1->flags &= ~MEM_Int;
       }else{
+	enterFPURegion();
         pIn1->u.r = (double)pIn1->u.i;
+	exitFPURegion();
         pIn1->flags |= MEM_Real;
         pIn1->flags &= ~(MEM_Int|MEM_Str);
       }
@@ -3541,7 +3569,9 @@ case OP_MakeRecord: {
           /* If the value is IntReal and is going to take up 8 bytes to store
           ** as an integer, then we might as well make it an 8-byte floating
           ** point value */
+	  enterFPURegion();
           pRec->u.r = (double)pRec->u.i;
+	  exitFPURegion();
           pRec->flags &= ~MEM_IntReal;
           pRec->flags |= MEM_Real;
           pRec->uTemp = 7;
@@ -4787,7 +4817,9 @@ case OP_SeekGT: {       /* jump, in3, group, ncycle */
           goto seek_not_found;
         }
       }
+      enterFPURegion();
       c = sqlite3IntFloatCompare(iKey, pIn3->u.r);
+      exitFPURegion();
 
       /* If the approximation iKey is larger than the actual real search
       ** term, substitute >= for > and < for <=. e.g. if the search term

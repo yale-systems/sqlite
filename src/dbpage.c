@@ -139,7 +139,9 @@ static int dbpageBestIndex(sqlite3_vtab *tab, sqlite3_index_info *pIdxInfo){
   ** constraint (in which case we use the "main" schema) or else the
   ** schema constraint was accepted.  Lower the estimated cost accordingly
   */
+  enterFPURegion();
   pIdxInfo->estimatedCost = 1.0e6;
+  exitFPURegion();
 
   /* Check for constraints against pgno */
   for(i=0; i<pIdxInfo->nConstraint; i++){
@@ -147,7 +149,9 @@ static int dbpageBestIndex(sqlite3_vtab *tab, sqlite3_index_info *pIdxInfo){
     if( p->usable && p->iColumn<=0 && p->op==SQLITE_INDEX_CONSTRAINT_EQ ){
       pIdxInfo->estimatedRows = 1;
       pIdxInfo->idxFlags = SQLITE_INDEX_SCAN_UNIQUE;
+      enterFPURegion();
       pIdxInfo->estimatedCost = 1.0;
+      exitFPURegion();
       pIdxInfo->aConstraintUsage[i].argvIndex = iPlan ? 2 : 1;
       pIdxInfo->aConstraintUsage[i].omit = 1;
       iPlan |= 1;
