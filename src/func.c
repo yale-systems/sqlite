@@ -16,8 +16,12 @@
 #include "sqliteInt.h"
 #include <stdlib.h>
 #include <assert.h>
-#ifndef SQLITE_OMIT_FLOATING_POINT
-# include <math.h>
+#if !defined(SQLITE_OMIT_FLOATING_POINT)
+# if defined(LINUX_KERNEL_BUILD)
+double fabs(double x) { return x > 0.0 ? x : -x; }
+# else
+#  include <math.h>
+# endif
 #endif
 #include "vdbeInt.h"
 

@@ -1,7 +1,6 @@
 #include "fpu.h"
 
 
-
 #if !defined(SQLITE_OMIT_FLOATING_POINT) && defined(LINUX_KERNEL_BUILD)
 # include <linux/asm/fpu.h>
 
@@ -21,6 +20,20 @@ void exitFPURegion(void){
   }
 }
 
+
+double __floatditf(long a) {
+  // TODO replace the dummy implementation with a real one
+  return 0.0;
+}
+
+double __multf3(double a, double b) {
+  // TODO replace the dummy implementation with a real one
+  return 0.0;
+}
+
+int __fixtfdi(double a) {
+  // TODO replace the dummy implementation with a real one
+  return 0;
+}
   
 #endif
-
