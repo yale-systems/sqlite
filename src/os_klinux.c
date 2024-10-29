@@ -71,19 +71,19 @@ int sqlite3_os_end(void){
 
 double __floatditf(long a) {
     //TODO
-    printf("Warning: Symbol __floatditf is undefined - this function should not be called!\n");
+    printk("Warning: Symbol __floatditf is undefined - this function should not be called!\n");
     return 0.0;
 }
 
 double __multf3(double a, double b) {
     //TODO
-    printf("Warning: Symbol __multf3 is undefined - this function should not be called!\n");
+    printk("Warning: Symbol __multf3 is undefined - this function should not be called!\n");
     return 0.0;
 }
 
 int __fixtfdi(double a) {
     //TODO
-    printf("Warning: Symbol __fixtfdi is undefined - this function should not be called!\n");
+    printk("Warning: Symbol __fixtfdi is undefined - this function should not be called!\n");
     return 0;
 }
 
