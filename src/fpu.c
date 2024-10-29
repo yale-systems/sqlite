@@ -21,18 +21,22 @@ void exitFPURegion(void){
   }
 }
 
-
-double __floatditf(long a){
-  return (double)a;
+double __floatditf(long a) {
+    //TODO
+    return 0.0;
 }
 
-double __multf3(double a, double b){
-  return a*b;
+double __multf3(double a, double b) {
+    //TODO
+    return 0.0;
 }
 
-int __fixtfdi(double a){
-  return (int)a;
+int __fixtfdi(double a) {
+    //TODO
+    printk("Warning: Symbol __fixtfdi is undefined - this function should not be called!\n");
+    return 0;
 }
+
   
 #endif
 
