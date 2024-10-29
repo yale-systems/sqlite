@@ -20,6 +20,19 @@ void exitFPURegion(void){
     usingFPU = 0;
   }
 }
+
+
+double __floatditf(long a){
+  return (double)a;
+}
+
+double __multf3(double a, double b){
+  return a*b;
+}
+
+int __fixtfdi(double a){
+  return (int)a;
+}
   
 #endif
 

@@ -5,7 +5,11 @@
 
 void enterFPURegion(void);
 void exitFPURegion(void);
-  
+double __floatditf(long a);
+double __multf3(double a, double b);
+int __fixtfdi(double a);
+
+
 #else
 # define enterFPURegion() (void)0
 # define exitFPURegion() (void)0
