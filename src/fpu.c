@@ -33,7 +33,6 @@ double __multf3(double a, double b) {
 
 int __fixtfdi(double a) {
     //TODO
-    printk("Warning: Symbol __fixtfdi is undefined - this function should not be called!\n");
     return 0;
 }
 
