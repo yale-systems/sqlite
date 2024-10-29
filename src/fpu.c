@@ -21,21 +21,6 @@ void exitFPURegion(void){
   }
 }
 
-double __floatditf(long a) {
-    //TODO
-    return 0.0;
-}
-
-double __multf3(double a, double b) {
-    //TODO
-    return 0.0;
-}
-
-int __fixtfdi(double a) {
-    //TODO
-    return 0;
-}
-
   
 #endif
 
