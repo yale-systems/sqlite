@@ -51,8 +51,9 @@
 # if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
 #  include <time.h>
 #  include <assert.h>
+# elif defined(LINUX_KERNEL_BUILD)
+# include <linux/types.h>
 # endif
-
 
 
 /*
