@@ -43,7 +43,6 @@
 **      Willmann-Bell, Inc
 **      Richmond, Virginia (USA)
 */
-#include "fpu.h"
 #include "sqliteInt.h"
 
 #if !defined(SQLITE_OMIT_DATETIME_FUNCS)
@@ -51,9 +50,8 @@
 # if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
 #  include <time.h>
 #  include <assert.h>
-# elif defined(LINUX_KERNEL_BUILD)
-# include <linux/types.h>
 # endif
+
 
 
 /*

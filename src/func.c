@@ -17,9 +17,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #if !defined(SQLITE_OMIT_FLOATING_POINT)
-# if defined(LINUX_KERNEL_BUILD)
-double fabs(double x) { return x > 0.0 ? x : -x; }
-# else
+# if !defined(LINUX_KERNEL_BUILD)
 #  include <math.h>
 # endif
 #endif

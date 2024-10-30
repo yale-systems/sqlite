@@ -2,8 +2,15 @@
 
 
 #if !defined(SQLITE_OMIT_FLOATING_POINT) && defined(LINUX_KERNEL_BUILD)
-
-#include <linux/fpu.h>
+# if defined(CONFIG_X86_64)
+#  include <asm/fpu/api.h>
+# elif defined(CONFIG_ARM) || defined(CONFIG_ARM64)
+#  include <asm/neon.h>
+#  define kernel_fpu_begin() kernel_neon_begin()
+#  define kernel_fpu_end() kernel_neon_end()
+# else
+#  error "Not a supported architecture"
+# endif
 
 static int usingFPU = 0;
 

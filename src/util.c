@@ -17,8 +17,12 @@
 */
 #include "sqliteInt.h"
 #include <stdarg.h>
-#if !defined(SQLITE_OMIT_FLOATING_POINT) && !defined(LINUX_KERNEL_BUILD)
-#include <math.h>
+#if !defined(SQLITE_OMIT_FLOATING_POINT)
+# if !defined(LINUX_KERNEL_BUILD)
+#  include <math.h>
+# else
+static double fabs(double a) { return a > 0.0 ? a : -a; }
+# endif
 #endif
 
 /*
