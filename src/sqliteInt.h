@@ -637,6 +637,7 @@
 
 #ifdef FREEBSD_KERNEL
 #elif defined(LINUX_KERNEL_BUILD)
+# define SQLITE_OMIT_LOCALTIME 1
 # include <linux/printk.h>
 # ifdef NDEBUG
 #   define assert(condition) ((void)0)
@@ -680,8 +681,6 @@
 # endif
 # if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
 #  define SQLITE_OMIT_DATETIME_FUNCS 1
-# else
-#  define SQLITE_OMIT_LOCALTIME 1
 # endif /* FREEBSD_KERNEL */
 # define SQLITE_OMIT_TRACE 1
 # undef SQLITE_MIXED_ENDIAN_64BIT_FLOAT

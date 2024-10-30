@@ -2,7 +2,7 @@
 
 
 #if !defined(SQLITE_OMIT_FLOATING_POINT) && defined(LINUX_KERNEL_BUILD)
-# include <linux/fpu.h>
+# include <linux/asm/fpu.h>
 
 static int usingFPU = 0;
 
