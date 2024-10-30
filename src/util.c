@@ -17,7 +17,7 @@
 */
 #include "sqliteInt.h"
 #include <stdarg.h>
-#if !defined(SQLITE_OMIT_FLOATING_POINT)
+#if !defined(SQLITE_OMIT_FLOATING_POINT) && !defined(LINUX_KERNEL_BUILD)
 #include <math.h>
 #endif
 
