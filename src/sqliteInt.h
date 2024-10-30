@@ -638,6 +638,7 @@
 #ifdef FREEBSD_KERNEL
 #elif defined(LINUX_KERNEL_BUILD)
 # define SQLITE_OMIT_LOCALTIME 1
+# define HAVE_ISNAN 0
 # include <linux/printk.h>
 # ifdef NDEBUG
 #   define assert(condition) ((void)0)
