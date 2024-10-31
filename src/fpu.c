@@ -6,6 +6,7 @@
 #  include <asm/fpu/api.h>
 # elif defined(CONFIG_ARM) || defined(CONFIG_ARM64)
 #  include <asm/neon.h>
+#  define kernel_fpu_available() cpu_has_neon()
 #  define kernel_fpu_begin() kernel_neon_begin()
 #  define kernel_fpu_end() kernel_neon_end()
 # else
@@ -42,6 +43,51 @@ double __multf3(double a, double b) {
 int __fixtfdi(double a) {
   // TODO replace the dummy implementation with a real one
   return 0;
+}
+
+int __getf2(double a, double b) {
+  // TODO replace the dummy implementation with a real one
+  return 0;
+}
+
+double __addtf3(double a, double b) {
+  // TODO replace the dummy implementation with a real one
+  return 0.0;
+}
+
+int __fixunstfdi(double a) {
+  // TODO replace the dummy implementation with a real one
+  return 0;
+}
+
+int __lttf2(double a, double b) {
+  // TODO replace the dummy implementation with a real one
+  return 0;
+}
+
+int __netf2(double a, double b) {
+  // TODO replace the dummy implementation with a real one
+  return 0;
+}
+
+double __extenddftf2(double a) {
+  // TODO replace the dummy implementation with a real one
+  return 0.0;
+}
+
+int __gttf2(double a, double b) {
+  // TODO replace the dummy implementation with a real one
+  return 0;
+}
+
+double __floatunditf(unsigned long a) {
+  // TODO replace the dummy implementation with a real one
+  return 0.0;
+}
+
+double __trunctfdf2(double a) {
+  // TODO replace the dummy implementation with a real one
+  return 0.0;
 }
   
 #endif
