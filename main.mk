@@ -58,7 +58,7 @@ LIBOBJ+= vdbe.o parse.o \
          backup.o bitvec.o btmutex.o btree.o build.o \
          callback.o complete.o ctime.o \
          date.o dbpage.o dbstat.o delete.o expr.o \
-	 fault.o fkey.o \
+	 fault.o fkey.o fpu.o \
          fts3.o fts3_aux.o fts3_expr.o fts3_hash.o fts3_icu.o fts3_porter.o \
          fts3_snippet.o fts3_tokenizer.o fts3_tokenizer1.o \
          fts3_tokenize_vtab.o \
@@ -105,6 +105,8 @@ SRC = \
   $(TOP)/src/expr.c \
   $(TOP)/src/fault.c \
   $(TOP)/src/fkey.c \
+  $(TOP)/src/fpu.c \
+  $(TOP)/src/fpu.h \
   $(TOP)/src/func.c \
   $(TOP)/src/global.c \
   $(TOP)/src/hash.c \
@@ -393,6 +395,7 @@ TESTSRC2 = \
   $(TOP)/src/dbpage.c \
   $(TOP)/src/dbstat.c \
   $(TOP)/src/expr.c \
+  $(TOP)/src/fpu.c \
   $(TOP)/src/func.c \
   $(TOP)/src/global.c \
   $(TOP)/src/insert.c \
@@ -443,6 +446,7 @@ TESTSRC2 = \
 HDR = \
    $(TOP)/src/btree.h \
    $(TOP)/src/btreeInt.h \
+   $(TOP)/src/fpu.h \
    $(TOP)/src/hash.h \
    $(TOP)/src/hwtime.h \
    keywordhash.h \

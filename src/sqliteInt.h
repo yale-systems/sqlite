@@ -637,22 +637,29 @@
 
 #ifdef FREEBSD_KERNEL
 #elif defined(LINUX_KERNEL_BUILD)
+# define SQLITE_OMIT_LOCALTIME
+# define SQLITE_HAVE_ISNAN 0
+# ifdef HAVE_ISNAN
+#   undef HAVE_ISNAN
+#   define HAVE_ISNAN 0
+# endif
 # include <linux/printk.h>
+
 # ifdef NDEBUG
 #   define assert(condition) ((void)0)
 # else
 #   define assert(condition)						\
     ((condition) ? (void)0 : pr_err("Assertion failed: %s, file %s, line %u, function %s\n", #condition, __FILE__, __LINE__, __func__))
-
 # endif
+
 # include <linux/minmax.h>
 # include <linux/string.h>
 #else
-#  include <stdio.h>
-#  include <stdlib.h>
-#  include <string.h>
-#  include <assert.h>
-#  include <stddef.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <assert.h>
+# include <stddef.h>
 #endif
 
 /*
@@ -671,10 +678,6 @@
 ** If compiling for a processor that lacks floating point support,
 ** substitute integer for floating-point
 */
-#if defined(LINUX_KERNEL_BUILD) && !defined(SQLITE_OMIT_FLOATING_POINT)
-# define SQLITE_OMIT_FLOATING_POINT
-#endif
-
 #ifdef SQLITE_OMIT_FLOATING_POINT
 # define double sqlite_int64
 # define float sqlite_int64
@@ -682,11 +685,11 @@
 # ifndef SQLITE_BIG_DBL
 #   define SQLITE_BIG_DBL (((sqlite3_int64)1)<<50)
 # endif
-#ifndef FREEBSD_KERNEL
-# define SQLITE_OMIT_DATETIME_FUNCS 1
-#else
- #define SQLITE_OMIT_LOCALTIME
-#endif /* FREEBSD_KERNEL */
+# if !defined(FREEBSD_KERNEL) && !defined(LINUX_KERNEL_BUILD)
+#  define SQLITE_OMIT_DATETIME_FUNCS 1
+# else
+#  define SQLITE_OMIT_LOCALTIME
+# endif /* FREEBSD_KERNEL */
 # define SQLITE_OMIT_TRACE 1
 # undef SQLITE_MIXED_ENDIAN_64BIT_FLOAT
 # undef SQLITE_HAVE_ISNAN
@@ -694,6 +697,8 @@
 #ifndef SQLITE_BIG_DBL
 # define SQLITE_BIG_DBL (1e99)
 #endif
+
+#include "fpu.h"
 
 /*
 ** OMIT_TEMPDB is set to 1 if SQLITE_OMIT_TEMPDB is defined, or 0

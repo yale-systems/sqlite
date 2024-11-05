@@ -1943,7 +1943,9 @@ char *sqlite3VdbeDisplayP4(sqlite3 *db, Op *pOp){
       }else if( pMem->flags & (MEM_Int|MEM_IntReal) ){
         sqlite3_str_appendf(&x, "%lld", pMem->u.i);
       }else if( pMem->flags & MEM_Real ){
+	enterFPURegion();
         sqlite3_str_appendf(&x, "%.16g", pMem->u.r);
+	exitFPURegion();
       }else if( pMem->flags & MEM_Null ){
         zP4 = "NULL";
       }else{
@@ -3892,7 +3894,9 @@ u32 sqlite3VdbeSerialType(Mem *pMem, int file_format, u32 *pLen){
       /* If the value is IntReal and is going to take up 8 bytes to store
       ** as an integer, then we might as well make it an 8-byte floating
       ** point value */
+      enterFPURegion();
       pMem->u.r = (double)pMem->u.i;
+      exitFPURegion();
       pMem->flags &= ~MEM_IntReal;
       pMem->flags |= MEM_Real;
       return 7;
@@ -4044,7 +4048,9 @@ static void serialGet(
     ** endian.
     */
     static const u64 t1 = ((u64)0x3ff00000)<<32;
+    enterFPURegion();
     static const double r1 = 1.0;
+    exitFPUregion();
     u64 t2 = t1;
     swapMixedEndianFloat(t2);
     assert( sizeof(r1)==sizeof(t2) && memcmp(&r1, &t2, sizeof(r1))==0 );
@@ -4481,11 +4487,6 @@ static int SQLITE_NOINLINE doubleEq(double a, double b){ return a==b; }
 ** equal to, or greater than the second (double).
 */
 int sqlite3IntFloatCompare(i64 i, double r){
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-  if (i < r) return -1;
-  else if (r == i) return 0;
-  else return 1;
-#else
   if( sqlite3IsNaN(r) ){
     /* SQLite considers NaN to be a NULL. And all integer values are greater
     ** than NULL */
@@ -4511,7 +4512,6 @@ int sqlite3IntFloatCompare(i64 i, double r){
     testcase( doubleEq(r,s) );
     return (s<r) ? -1 : (s>r);
   }
-#endif
 }
 
 /*
@@ -4553,15 +4553,21 @@ int sqlite3MemCompare(const Mem *pMem1, const Mem *pMem2, const CollSeq *pColl){
       return 0;
     }
     if( (f1 & f2 & MEM_Real)!=0 ){
-      if( pMem1->u.r < pMem2->u.r ) return -1;
-      if( pMem1->u.r > pMem2->u.r ) return +1;
-      return 0;
+      enterFPURegion();
+      int res = 0;
+      if( pMem1->u.r < pMem2->u.r ) res = -1;
+      if( pMem1->u.r > pMem2->u.r ) res = +1;
+      exitFPURegion();
+      return res;
     }
     if( (f1&(MEM_Int|MEM_IntReal))!=0 ){
       testcase( f1 & MEM_Int );
       testcase( f1 & MEM_IntReal );
       if( (f2&MEM_Real)!=0 ){
-        return sqlite3IntFloatCompare(pMem1->u.i, pMem2->u.r);
+	enterFPURegion();
+	int rc = sqlite3IntFloatCompare(pMem1->u.i, pMem2->u.r);
+	exitFPURegion();
+        return rc;
       }else if( (f2&(MEM_Int|MEM_IntReal))!=0 ){
         if( pMem1->u.i < pMem2->u.i ) return -1;
         if( pMem1->u.i > pMem2->u.i ) return +1;
@@ -4574,7 +4580,10 @@ int sqlite3MemCompare(const Mem *pMem1, const Mem *pMem2, const CollSeq *pColl){
       if( (f2&(MEM_Int|MEM_IntReal))!=0 ){
         testcase( f2 & MEM_Int );
         testcase( f2 & MEM_IntReal );
-        return -sqlite3IntFloatCompare(pMem2->u.i, pMem1->u.r);
+	enterFPURegion();
+	int rc = -sqlite3IntFloatCompare(pMem2->u.i, pMem1->u.r);
+	exitFPURegion();
+        return rc;
       }else{
         return -1;
       }
@@ -4741,7 +4750,9 @@ int sqlite3VdbeRecordCompareWithSkip(
         rc = -1;
       }else if( serial_type==7 ){
         sqlite3VdbeSerialGet(&aKey1[d1], serial_type, &mem1);
+	enterFPURegion();
         rc = -sqlite3IntFloatCompare(pRhs->u.i, mem1.u.r);
+	exitFPURegion();
       }else{
         i64 lhs = vdbeRecordDecodeInt(serial_type, &aKey1[d1]);
         i64 rhs = pRhs->u.i;
@@ -4767,13 +4778,17 @@ int sqlite3VdbeRecordCompareWithSkip(
       }else{
         sqlite3VdbeSerialGet(&aKey1[d1], serial_type, &mem1);
         if( serial_type==7 ){
+	  enterFPURegion();
           if( mem1.u.r<pRhs->u.r ){
             rc = -1;
           }else if( mem1.u.r>pRhs->u.r ){
             rc = +1;
           }
+	  exitFPURegion();
         }else{
+	  enterFPURegion();
           rc = sqlite3IntFloatCompare(mem1.u.i, pRhs->u.r);
+	  exitFPURegion();
         }
       }
     }

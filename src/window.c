@@ -221,9 +221,14 @@ static void nth_valueStepFunc(
         iVal = sqlite3_value_int64(apArg[1]);
         break;
       case SQLITE_FLOAT: {
+	enterFPURegion();
         double fVal = sqlite3_value_double(apArg[1]);
-        if( ((i64)fVal)!=fVal ) goto error_out;
+        if( ((i64)fVal)!=fVal ) {
+	    exitFPURegion();
+	    goto error_out;
+	}
         iVal = (i64)fVal;
+	exitFPURegion();
         break;
       }
       default:
@@ -354,12 +359,14 @@ static void percent_rankValueFunc(sqlite3_context *pCtx){
   p = (struct CallCount*)sqlite3_aggregate_context(pCtx, sizeof(*p));
   if( p ){
     p->nValue = p->nStep;
+    enterFPURegion();
     if( p->nTotal>1 ){
       double r = (double)p->nValue / (double)(p->nTotal-1);
       sqlite3_result_double(pCtx, r);
     }else{
       sqlite3_result_double(pCtx, 0.0);
     }
+    exitFPURegion();
   }
 }
 #define percent_rankFinalizeFunc percent_rankValueFunc
@@ -398,8 +405,10 @@ static void cume_distValueFunc(sqlite3_context *pCtx){
   struct CallCount *p;
   p = (struct CallCount*)sqlite3_aggregate_context(pCtx, 0);
   if( p ){
+    enterFPURegion();
     double r = (double)(p->nStep) / (double)(p->nTotal);
     sqlite3_result_double(pCtx, r);
+    exitFPURegion();
   }
 }
 #define cume_distFinalizeFunc cume_distValueFunc

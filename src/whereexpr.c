@@ -271,6 +271,7 @@ static int isLikeOrGlob(
         ){
           int isNum;
           double rDummy;
+	  enterFPURegion();
           isNum = sqlite3AtoF(zNew, &rDummy, iTo, SQLITE_UTF8);
           if( isNum<=0 ){
             if( iTo==1 && zNew[0]=='-' ){
@@ -281,6 +282,7 @@ static int isLikeOrGlob(
               zNew[iTo-1]--;
             }
           }
+	  exitFPURegion();
           if( isNum>0 ){
             sqlite3ExprDelete(db, pPrefix);
             sqlite3ValueFree(pVal);

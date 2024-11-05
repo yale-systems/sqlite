@@ -890,18 +890,22 @@ static void notValidImpl(
 ** value between 1.0 and 0.0.
 */
 static int exprProbability(Expr *p){
+  enterFPURegion();
   double r = -1.0;
-  if( p->op!=TK_FLOAT ) return -1;
+  if( p->op!=TK_FLOAT ) {
+      exitFPURegion();
+      return -1;
+  }
   assert( !ExprHasProperty(p, EP_IntValue) );
   sqlite3AtoF(p->u.zToken, &r, sqlite3Strlen30(p->u.zToken), SQLITE_UTF8);
   assert( r>=0.0 );
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-  if( r> 1 ) return -1;
-  return (int)(r*134217728);
-#else
-  if( r>1.0 ) return -1;
-  return (int)(r*134217728.0);
-#endif
+  if( r>1.0 ) {
+      exitFPURegion();
+      return -1;
+  }
+  int res = (int)(r*134217728.0);
+  exitFPURegion();
+  return res;
 }
 
 /*

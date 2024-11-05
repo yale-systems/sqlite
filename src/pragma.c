@@ -2725,7 +2725,9 @@ static int pragmaVtabBestIndex(sqlite3_vtab *tab, sqlite3_index_info *pIdxInfo){
   int i, j;
   int seen[2];
 
+  enterFPURegion();
   pIdxInfo->estimatedCost = (double)1;
+  exitFPURegion();
   if( pTab->nHidden==0 ){ return SQLITE_OK; }
   pConstraint = pIdxInfo->aConstraint;
   seen[0] = 0;
@@ -2739,7 +2741,9 @@ static int pragmaVtabBestIndex(sqlite3_vtab *tab, sqlite3_index_info *pIdxInfo){
     seen[j] = i+1;
   }
   if( seen[0]==0 ){
+    enterFPURegion();
     pIdxInfo->estimatedCost = (double)2147483647;
+    exitFPURegion();
     pIdxInfo->estimatedRows = 2147483647;
     return SQLITE_OK;
   }
@@ -2747,7 +2751,9 @@ static int pragmaVtabBestIndex(sqlite3_vtab *tab, sqlite3_index_info *pIdxInfo){
   pIdxInfo->aConstraintUsage[j].argvIndex = 1;
   pIdxInfo->aConstraintUsage[j].omit = 1;
   if( seen[1]==0 ) return SQLITE_OK;
+  enterFPURegion();
   pIdxInfo->estimatedCost = (double)20;
+  exitFPURegion();
   pIdxInfo->estimatedRows = 20;
   j = seen[1]-1;
   pIdxInfo->aConstraintUsage[j].argvIndex = 2;

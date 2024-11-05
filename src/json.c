@@ -565,7 +565,9 @@ static void jsonAppendValue(
       break;
     }
     case SQLITE_FLOAT: {
+      enterFPURegion();
       jsonPrintf(100, p, "%!0.15g", sqlite3_value_double(pValue));
+      exitFPURegion();
       break;
     }
     case SQLITE_INTEGER: {
@@ -936,9 +938,11 @@ static void jsonReturn(
       const char *z;
       assert( pNode->eU==1 );
     to_double:
+      enterFPURegion();
       z = pNode->u.zJContent;
       sqlite3AtoF(z, &r, sqlite3Strlen30(z), SQLITE_UTF8);
       sqlite3_result_double(pCtx, r);
+      exitFPURegion();
       break;
     }
     case JSON_STRING: {
@@ -1058,7 +1062,7 @@ static int jsonParseAddNode(JsonParse*,u32,u32,const char*);
 #  define JSON_NOINLINE noinline
 #elif defined(__GNUC__)
 #  define JSON_NOINLINE  __attribute__((noinline))
-#elif (defined(_MSC_VER) && _MSC_VER>=1310
+#elif defined(_MSC_VER) && _MSC_VER>=1310
 #  define JSON_NOINLINE  __declspec(noinline)
 #else
 #  define JSON_NOINLINE
@@ -2820,7 +2824,9 @@ static void jsonReplaceNode(
       break;
     }
     case SQLITE_FLOAT: {
+      enterFPURegion();
       char *z = sqlite3_mprintf("%!0.15g", sqlite3_value_double(pValue));
+      exitFPURegion();
       int n;
       if( z==0 ){
         p->oom = 1;

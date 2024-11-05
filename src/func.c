@@ -16,8 +16,10 @@
 #include "sqliteInt.h"
 #include <stdlib.h>
 #include <assert.h>
-#ifndef SQLITE_OMIT_FLOATING_POINT
-# include <math.h>
+#if !defined(SQLITE_OMIT_FLOATING_POINT)
+# if !defined(LINUX_KERNEL_BUILD)
+#  include <math.h>
+# endif
 #endif
 #include "vdbeInt.h"
 
@@ -221,9 +223,11 @@ static void absFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
       ** IMP: R-01992-00519 Abs(X) returns 0.0 if X is a string or blob
       ** that cannot be converted to a numeric value.
       */
+      enterFPURegion();
       double rVal = sqlite3_value_double(argv[0]);
       if( rVal<0 ) rVal = -rVal;
       sqlite3_result_double(context, rVal);
+      exitFPURegion();
       break;
     }
   }
@@ -451,6 +455,7 @@ static void roundFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
     if( n<0 ) n = 0;
   }
   if( sqlite3_value_type(argv[0])==SQLITE_NULL ) return;
+  enterFPURegion();
   r = sqlite3_value_double(argv[0]);
   /* If Y==0 and X will fit in a 64-bit int,
   ** handle the rounding directly,
@@ -464,12 +469,16 @@ static void roundFunc(sqlite3_context *context, int argc, sqlite3_value **argv){
     zBuf = sqlite3_mprintf("%!.*f",n,r);
     if( zBuf==0 ){
       sqlite3_result_error_nomem(context);
+      exitFPURegion();
       return;
     }
     sqlite3AtoF(zBuf, &r, sqlite3Strlen30(zBuf), SQLITE_UTF8);
+    exitFPURegion();
     sqlite3_free(zBuf);
+    enterFPURegion();
   }
   sqlite3_result_double(context, r);
+  exitFPURegion();
 }
 #endif
 
@@ -1098,6 +1107,7 @@ void sqlite3QuoteValue(StrAccum *pStr, sqlite3_value *pValue){
 
   switch( sqlite3_value_type(pValue) ){
     case SQLITE_FLOAT: {
+      enterFPURegion();
       double r1, r2;
       const char *zVal;
       r1 = sqlite3_value_double(pValue);
@@ -1110,6 +1120,7 @@ void sqlite3QuoteValue(StrAccum *pStr, sqlite3_value *pValue){
           sqlite3_str_appendf(pStr, "%!.20e", r1);
         }
       }
+      exitFPURegion();
       break;
     }
     case SQLITE_INTEGER: {
@@ -1793,10 +1804,14 @@ static void kahanBabuskaNeumaierStepInt64(volatile SumCtx *pSum, i64 iVal){
     i64 iBig, iSm;
     iSm = iVal % 16384;
     iBig = iVal - iSm;
+    enterFPURegion();
     kahanBabuskaNeumaierStep(pSum, iBig);
     kahanBabuskaNeumaierStep(pSum, iSm);
+    exitFPURegion();
   }else{
+    enterFPURegion();
     kahanBabuskaNeumaierStep(pSum, (double)iVal);
+    exitFPURegion();
   }
 }
 
@@ -1809,11 +1824,15 @@ static void kahanBabuskaNeumaierInit(
 ){
   if( iVal<=-4503599627370496LL || iVal>=+4503599627370496LL ){
     i64 iSm = iVal % 16384;
+    enterFPURegion();
     p->rSum = (double)(iVal - iSm);
     p->rErr = (double)iSm;
+    exitFPURegion();
   }else{
+    enterFPURegion();
     p->rSum = (double)iVal;
     p->rErr = 0.0;
+    exitFPURegion();
   }
 }
 
@@ -1840,7 +1859,9 @@ static void sumStep(sqlite3_context *context, int argc, sqlite3_value **argv){
       if( type!=SQLITE_INTEGER ){
         kahanBabuskaNeumaierInit(p, p->iSum);
         p->approx = 1;
+	enterFPURegion();
         kahanBabuskaNeumaierStep(p, sqlite3_value_double(argv[0]));
+	exitFPURegion();
       }else{
         i64 x = p->iSum;
         if( sqlite3AddInt64(&x, sqlite3_value_int64(argv[0]))==0 ){
@@ -1857,7 +1878,9 @@ static void sumStep(sqlite3_context *context, int argc, sqlite3_value **argv){
         kahanBabuskaNeumaierStepInt64(p, sqlite3_value_int64(argv[0]));
       }else{
         p->ovrfl = 0;
+	enterFPURegion();
         kahanBabuskaNeumaierStep(p, sqlite3_value_double(argv[0]));
+	exitFPURegion();
       }
     }
   }
@@ -1886,7 +1909,9 @@ static void sumInverse(sqlite3_context *context, int argc, sqlite3_value**argv){
         kahanBabuskaNeumaierStepInt64(p, 1);
       }       
     }else{
+      enterFPURegion();
       kahanBabuskaNeumaierStep(p, -sqlite3_value_double(argv[0]));
+      exitFPURegion();
     }
   }
 }
@@ -1900,11 +1925,15 @@ static void sumFinalize(sqlite3_context *context){
     if( p->approx ){
       if( p->ovrfl ){
         sqlite3_result_error(context,"integer overflow",-1);
-      }else if( !sqlite3IsNaN(p->rErr) ){
+	return;
+      }
+      enterFPURegion();
+      if( !sqlite3IsNaN(p->rErr) ){
         sqlite3_result_double(context, p->rSum+p->rErr);
       }else{
         sqlite3_result_double(context, p->rSum);
       }
+      exitFPURegion();
     }else{
       sqlite3_result_int64(context, p->iSum);
     }
@@ -1914,6 +1943,7 @@ static void avgFinalize(sqlite3_context *context){
   SumCtx *p;
   p = sqlite3_aggregate_context(context, 0);
   if( p && p->cnt>0 ){
+    enterFPURegion();
     double r;
     if( p->approx ){
       r = p->rSum;
@@ -1922,12 +1952,15 @@ static void avgFinalize(sqlite3_context *context){
       r = (double)(p->iSum);
     }
     sqlite3_result_double(context, r/(double)p->cnt);
+    exitFPURegion();
   }
 }
 static void totalFinalize(sqlite3_context *context){
   SumCtx *p;
-  double r = 0.0;
+  double r;
   p = sqlite3_aggregate_context(context, 0);
+  enterFPURegion();
+  r = 0.0;
   if( p ){
     if( p->approx ){
       r = p->rSum;
@@ -1937,6 +1970,7 @@ static void totalFinalize(sqlite3_context *context){
     }
   }
   sqlite3_result_double(context, r);
+  exitFPURegion();
 }
 
 /*
@@ -2363,8 +2397,10 @@ static void ceilingFunc(
        break;
     }
     case SQLITE_FLOAT: {
+       enterFPURegion();
        double (*x)(double) = (double(*)(double))sqlite3_user_data(context);
        sqlite3_result_double(context, x(sqlite3_value_double(argv[0])));
+       exitFPURegion();
        break;
     }
     default: {
@@ -2411,8 +2447,13 @@ static void logFunc(
   switch( sqlite3_value_numeric_type(argv[0]) ){
     case SQLITE_INTEGER:
     case SQLITE_FLOAT:
+      enterFPURegion();
       x = sqlite3_value_double(argv[0]);
-      if( x<=0.0 ) return;
+      if( x<=0.0 ) {
+	  exitFPURegion();
+	  return;
+      }
+      exitFPURegion();
       break;
     default:
       return;
@@ -2421,10 +2462,18 @@ static void logFunc(
     switch( sqlite3_value_numeric_type(argv[0]) ){
       case SQLITE_INTEGER:
       case SQLITE_FLOAT:
+	enterFPURegion();
         b = log(x);
-        if( b<=0.0 ) return;
+        if( b<=0.0 ) {
+	    exitFPURegion();
+	    return;
+	}
         x = sqlite3_value_double(argv[1]);
-        if( x<=0.0 ) return;
+        if( x<=0.0 ) {
+	    exitFPURegion();
+	    return;
+	}
+	exitFPURegion();
         break;
      default:
         return;
@@ -2468,10 +2517,12 @@ static void math1Func(
   assert( argc==1 );
   type0 = sqlite3_value_numeric_type(argv[0]);
   if( type0!=SQLITE_INTEGER && type0!=SQLITE_FLOAT ) return;
+  enterFPURegion();
   v0 = sqlite3_value_double(argv[0]);
   x = (double(*)(double))sqlite3_user_data(context);
   ans = x(v0);
   sqlite3_result_double(context, ans);
+  exitFPURegion();
 }
 
 /*
@@ -2492,11 +2543,13 @@ static void math2Func(
   if( type0!=SQLITE_INTEGER && type0!=SQLITE_FLOAT ) return;
   type1 = sqlite3_value_numeric_type(argv[1]);
   if( type1!=SQLITE_INTEGER && type1!=SQLITE_FLOAT ) return;
+  enterFPURegion();
   v0 = sqlite3_value_double(argv[0]);
   v1 = sqlite3_value_double(argv[1]);
   x = (double(*)(double,double))sqlite3_user_data(context);
   ans = x(v0, v1);
   sqlite3_result_double(context, ans);
+  exitFPURegion();
 }
 
 /*
@@ -2509,7 +2562,9 @@ static void piFunc(
 ){
   assert( argc==0 );
   (void)argv;
+  enterFPURegion();
   sqlite3_result_double(context, M_PI);
+  exitFPURegion();
 }
 
 #endif /* SQLITE_ENABLE_MATH_FUNCTIONS */
@@ -2528,12 +2583,10 @@ static void signFunc(
   assert( argc==1 );
   type0 = sqlite3_value_numeric_type(argv[0]);
   if( type0!=SQLITE_INTEGER && type0!=SQLITE_FLOAT ) return;
+  enterFPURegion();
   x = sqlite3_value_double(argv[0]);
-#if defined(SQLITE_OMIT_FLOATING_POINT)
-  sqlite3_result_int(context, x<0 ? -1 : x>0 ? +1 : 0);
-#else
   sqlite3_result_int(context, x<0.0 ? -1 : x>0.0 ? +1 : 0);
-#endif
+  exitFPURegion();
 }
 
 #ifdef SQLITE_DEBUG
@@ -2554,10 +2607,14 @@ static void fpdecodeFunc(
   char zBuf[100];
   UNUSED_PARAMETER(argc);
   assert( argc==3 );
+  enterFPURegion();
   x = sqlite3_value_double(argv[0]);
+  exitFPURegion();
   y = sqlite3_value_int(argv[1]);
   z = sqlite3_value_int(argv[2]);
+  enterFPURegion();
   sqlite3FpDecode(&s, x, y, z);
+  exitFPURegion();
   if( s.isSpecial==2 ){
     sqlite3_snprintf(sizeof(zBuf), zBuf, "NaN");
   }else{

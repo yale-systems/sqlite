@@ -158,6 +158,7 @@ close $in
 foreach hdr {
    btree.h
    btreeInt.h
+   fpu.h 
    fts3.h
    fts3Int.h
    fts3_hash.h
@@ -387,6 +388,7 @@ set flist {
    hash.c
    opcodes.c
 
+   fpu.c
    os_kfbsd.c
    os_klinux.c
    os_kv.c

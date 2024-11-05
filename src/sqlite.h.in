@@ -79,9 +79,6 @@ MALLOC_DECLARE(M_SQLITE);
 #elif defined(LINUX_KERNEL_BUILD)
 # include <linux/compiler.h>
 # include <linux/stdarg.h>
-# if !defined(SQLITE_OMIT_FLOATING_POINT)
-#  define SQLITE_OMIT_FLOATING_POINT
-# endif
 #else
 #  include <stdarg.h>     /* Needed for the definition of va_list */
 #endif

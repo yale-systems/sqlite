@@ -382,7 +382,9 @@ static int bytecodevtabBestIndex(
   struct sqlite3_index_constraint *p;
   bytecodevtab *pVTab = (bytecodevtab*)tab;
   int iBaseCol = pVTab->bTablesUsed ? 4 : 10;
+  enterFPURegion();
   pIdxInfo->estimatedCost = (double)100;
+  exitFPURegion();
   pIdxInfo->estimatedRows = 100;
   pIdxInfo->idxNum = 0;
   for(i=0, p=pIdxInfo->aConstraint; i<pIdxInfo->nConstraint; i++, p++){
