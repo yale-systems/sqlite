@@ -135,11 +135,11 @@
 /* Use kernel mutexes */
 #undef SQLITE_MUTEX_FBSD
 
-/* Solves issues with initialization of SQLite */
-#undef SQLITE_OMIT_DESERIALIZE
-
 /* FreeBSD Kernel uses no floating point functions */
 #undef SQLITE_OMIT_FLOATING_POINT
+
+/* FreeBSD Kernel does not have localtime */
+#undef SQLITE_OMIT_LOCALTIME
 
 /* FreeBSD Kernel is a different OS */
 #undef SQLITE_OS_OTHER
